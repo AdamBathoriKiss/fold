@@ -312,7 +312,8 @@
     }
 
     /* ── PAYMENT RESULT PAGE ── */
-    #result-page { padding-top:var(--nav-h); min-height:100vh; background:var(--bg); display:flex; align-items:center; justify-content:center; }
+    #result-page { padding-top:var(--nav-h); min-height:100vh; background:var(--bg); align-items:center; justify-content:center; }
+    #result-page.active { display:flex; }
     .result-card {
       background:var(--white); border-radius:24px;
       box-shadow:0 8px 40px rgba(59,38,24,.12);
@@ -343,21 +344,12 @@
     }
     .btn-back-home:hover { background:#6a4e3a; }
 
-    /* ── PAYMENT LOADING OVERLAY ── */
-    #payOverlay {
-      display:none; position:fixed; inset:0; z-index:500;
-      background:rgba(241,233,222,.92); backdrop-filter:blur(6px);
-      flex-direction:column; align-items:center; justify-content:center; gap:20px;
-    }
-    #payOverlay.active { display:flex; }
     .pay-spinner {
       width:48px; height:48px; border:4px solid rgba(123,92,69,.2);
       border-top-color:var(--mid); border-radius:50%;
       animation:spin .8s linear infinite;
     }
     @keyframes spin { to { transform:rotate(360deg); } }
-    .pay-overlay-text { font-family:var(--serif); font-size:22px; color:var(--dark); }
-    .pay-overlay-sub  { font-size:15px; color:var(--muted); }
 
   </style>
 </head>
@@ -569,12 +561,6 @@
   </div>
 </div>
 
-<!-- PAYMENT LOADING OVERLAY (fixed, outside page flow) -->
-<div id="payOverlay">
-  <div class="pay-spinner"></div>
-  <div class="pay-overlay-text">Átirányítás a Stripe fizetési oldalra…</div>
-  <div class="pay-overlay-sub">Kérjük, ne zárd be az oldalt.</div>
-</div>
 
 <script>
   /* ── PAGE SWITCHER ── */
@@ -721,7 +707,6 @@
     const btn = document.getElementById('btnPay');
     btn.disabled = true;
     btn.textContent = 'Feldolgozás…';
-    document.getElementById('payOverlay').classList.add('active');
 
     try {
       const res  = await fetch('/api/create-checkout', {
@@ -734,7 +719,6 @@
       // Átirányítás a Stripe Checkout oldalra
       window.location.href = data.url;
     } catch (err) {
-      document.getElementById('payOverlay').classList.remove('active');
       btn.disabled = false;
       btn.textContent = 'Fizetés';
       showPaymentError(err.message);
@@ -839,6 +823,8 @@
         </svg>
         Vissza a főoldalra
       </button>`;
+
+    if (cfg.onShow) cfg.onShow();
   }
 
   window.addEventListener('DOMContentLoaded', handlePaymentResult);
