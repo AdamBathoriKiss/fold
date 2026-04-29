@@ -28,7 +28,7 @@
     }
 
     html { scroll-behavior: smooth; scroll-padding-top: var(--nav-h); }
-    body { background: var(--bg); color: var(--text); font-family: var(--sans); overflow-x: hidden; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); overflow-x: clip; }
 
     /* ── PAGES ── */
     .page { display: none; }
@@ -248,7 +248,16 @@
     .trash-btn:hover { color:#c0392b; }
     .trash-btn svg { width:22px; height:22px; }
 
-    .cart-summary { background:var(--white); border-radius:20px; padding:28px 20px; display:flex; flex-direction:column; gap:16px; }
+    .cart-summary {
+      background:var(--white); border-radius:20px; padding:28px 20px;
+      display:flex; flex-direction:column; gap:16px;
+      position:sticky; top:calc(var(--nav-h) + 20px);
+      max-height:calc(100vh - var(--nav-h) - 40px);
+      overflow-y:auto;
+      align-self:start;
+    }
+    .cart-summary::-webkit-scrollbar { width:4px; }
+    .cart-summary::-webkit-scrollbar-thumb { background:rgba(0,0,0,.15); border-radius:4px; }
     .summary-title { font-family:var(--serif); font-weight:400; font-size:22px; text-align:center; }
     .summary-divider { height:1px; background:rgba(0,0,0,.1); }
     .summary-rows { display:flex; flex-direction:column; gap:10px; }
@@ -479,6 +488,62 @@
     }
     @keyframes spin { to { transform:rotate(360deg); } }
 
+    /* ── SZÁLLÍTÁS + FORM ── */
+    .ship-label { font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:#bbb; margin-bottom:10px; }
+    .ship-opts { display:flex; flex-direction:column; gap:8px; }
+    .ship-opt {
+      width:100%; display:flex; align-items:center; gap:10px;
+      padding:11px 14px; border-radius:12px;
+      border:1.5px solid rgba(0,0,0,.1); background:#fff;
+      cursor:pointer; text-align:left; font:inherit;
+      transition:border-color .2s, background .2s, box-shadow .2s;
+    }
+    .ship-opt:hover { border-color:var(--mid); }
+    .ship-opt.selected { border-color:var(--mid); background:var(--bg); box-shadow:0 0 0 3px rgba(123,92,69,.12); }
+    .ship-opt-icon { width:32px; height:32px; background:var(--bg); border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--mid); }
+    .ship-opt.selected .ship-opt-icon { background:var(--cream); }
+    .ship-opt-body { flex:1; display:flex; flex-direction:column; gap:2px; }
+    .ship-opt-name { font-size:13px; font-weight:500; color:var(--text); }
+    .ship-opt-price { font-size:12px; color:var(--mid); font-weight:600; }
+    .ship-opt-radio { width:18px; height:18px; border-radius:50%; border:2px solid rgba(0,0,0,.15); flex-shrink:0; transition:border-color .2s, background .2s; position:relative; }
+    .ship-opt.selected .ship-opt-radio { border-color:var(--mid); background:var(--mid); }
+    .ship-opt.selected .ship-opt-radio::after { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:6px; height:6px; border-radius:50%; background:#fff; }
+
+    .pickup-panel { display:flex; flex-direction:column; margin-top:10px; }
+    .pickup-search {
+      width:100%; padding:9px 12px; border-radius:10px;
+      border:1.5px solid rgba(0,0,0,.1); background:#fff;
+      font-family:var(--sans); font-size:13px; color:var(--text);
+      outline:none; transition:border-color .2s; margin-bottom:8px; box-sizing:border-box;
+    }
+    .pickup-search:focus { border-color:var(--mid); }
+    .pickup-search::placeholder { color:#bbb; }
+    .pickup-list { max-height:190px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
+    .pickup-list::-webkit-scrollbar { width:4px; }
+    .pickup-list::-webkit-scrollbar-thumb { background:rgba(0,0,0,.15); border-radius:4px; }
+    .pickup-item {
+      padding:10px 12px; border-radius:10px; border:1.5px solid rgba(0,0,0,.08);
+      cursor:pointer; transition:border-color .2s, background .2s; background:#fff; flex-shrink:0;
+    }
+    .pickup-item:hover { border-color:var(--mid); }
+    .pickup-item.selected { border-color:var(--mid); background:var(--bg); }
+    .pickup-item-name { font-size:12px; font-weight:600; color:var(--text); }
+    .pickup-item-addr { font-size:11px; color:#999; margin-top:2px; }
+    .pickup-item-hours { font-size:11px; color:var(--mid); margin-top:1px; }
+
+    .form-section-label { font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:#bbb; margin-bottom:8px; }
+    .form-input {
+      width:100%; padding:10px 12px; border-radius:10px;
+      border:1.5px solid rgba(0,0,0,.1); background:#fff;
+      font-family:var(--sans); font-size:13px; color:var(--text);
+      outline:none; transition:border-color .2s; margin-bottom:8px; display:block; box-sizing:border-box;
+    }
+    .form-input:focus { border-color:var(--mid); }
+    .form-input::placeholder { color:#bbb; }
+    .form-row { display:flex; gap:8px; margin-bottom:8px; }
+    .form-row .form-input { flex:1; margin-bottom:0; }
+    .form-row .form-input.zip { flex:0 0 90px; }
+
   </style>
 </head>
 <body>
@@ -668,6 +733,81 @@
       <div class="cart-summary">
         <div class="summary-title">Összesítés</div>
         <div class="summary-divider"></div>
+
+        <!-- SZÁLLÍTÁSI MÓD -->
+        <div id="shippingSection">
+          <div class="ship-label">Szállítási mód</div>
+          <div class="ship-opts">
+            <button class="ship-opt" data-m="pickup" onclick="selectShipping('pickup')">
+              <span class="ship-opt-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M21 8L12 3 3 8v8l9 5 9-5V8z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  <path d="M12 3v13M3.5 8.5L12 13l8.5-4.5" stroke="currentColor" stroke-width="1.8"/>
+                </svg>
+              </span>
+              <span class="ship-opt-body">
+                <span class="ship-opt-name">GLS Csomagpont</span>
+                <span class="ship-opt-price">Ingyenes</span>
+              </span>
+              <span class="ship-opt-radio"></span>
+            </button>
+            <button class="ship-opt" data-m="home" onclick="selectShipping('home')">
+              <span class="ship-opt-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 12L12 4l9 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span class="ship-opt-body">
+                <span class="ship-opt-name">GLS Házhozszállítás</span>
+                <span class="ship-opt-price">990 Ft</span>
+              </span>
+              <span class="ship-opt-radio"></span>
+            </button>
+          </div>
+
+          <!-- Csomagpont választó -->
+          <div class="pickup-panel" id="pickupPanel" style="display:none;">
+
+            <!-- Keresőnézet -->
+            <div id="pickupSearchView">
+              <div style="display:flex;gap:6px;margin-bottom:8px;">
+                <input class="pickup-search" id="pickupSearch" type="text"
+                  placeholder="Irányítószám vagy városnév…"
+                  oninput="onPickupInput(this.value)"
+                  onkeydown="if(event.key==='Enter')doPickupSearch()"
+                  style="margin-bottom:0;flex:1;" />
+                <button onclick="doPickupSearch()" style="flex-shrink:0;height:36px;padding:0 14px;background:var(--mid);color:#fff;border:none;border-radius:10px;font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;transition:background .2s;" onmouseover="this.style.background='#6a4e3a'" onmouseout="this.style.background='var(--mid)'">Keresés</button>
+              </div>
+              <div class="pickup-list" id="pickupList"></div>
+            </div>
+
+            <!-- Kiválasztott csomagpont (bezárt nézet) -->
+            <div id="pickupSelectedView" style="display:none;">
+              <div class="pickup-item selected" style="cursor:pointer;" onclick="showPickupSearch()">
+                <div id="pickupSelectedContent"></div>
+                <div style="font-size:11px;color:var(--mid);margin-top:5px;font-weight:500;">Módosítás ›</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Megrendelő adatai -->
+          <div id="customerPanel" style="display:none;margin-top:10px;">
+            <div class="form-section-label">Megrendelő adatai</div>
+            <input class="form-input" id="custName"  type="text" placeholder="Teljes név *"  autocomplete="name" />
+            <input class="form-input" id="custPhone" type="tel"  placeholder="Telefonszám *" autocomplete="tel" />
+            <div id="addressPanel" style="display:none;">
+              <div class="form-row">
+                <input class="form-input zip" id="custZip"    type="text" placeholder="Ir.szám *" autocomplete="postal-code" />
+                <input class="form-input"     id="custCity"   type="text" placeholder="Város *"   autocomplete="address-level2" />
+              </div>
+              <input class="form-input" id="custStreet" type="text" placeholder="Utca, házszám *" autocomplete="street-address" />
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-divider"></div>
         <div class="summary-rows">
           <div class="summary-row"><span>Összesen</span><span id="sumSubtotal">–</span></div>
           <div class="summary-row"><span>Szállítás</span><span id="sumShipping">–</span></div>
@@ -837,6 +977,151 @@
   const SHIPPING = 990;
   let cartItems = [];
 
+  /* ── PICKUP POINTS (helyi fallback GLS csomagpontok) ── */
+  const PICKUP_POINTS = [
+    { id:1,  name:'GLS Csomagpont – Tesco',       city:'Budapest',       zip:'1148', address:'Örs vezér tere 25, 1148 Budapest',       hours:'H–V: 7:00–22:00, Szo–V: 8:00–20:00' },
+    { id:2,  name:'GLS Csomagpont – SPAR',         city:'Budapest',       zip:'1115', address:'Etele út 1-3, 1115 Budapest',            hours:'H–P: 7:00–20:00, Szo: 7:00–18:00' },
+    { id:3,  name:'GLS Csomagpont – VII. ker.',    city:'Budapest',       zip:'1074', address:'Rákóczi út 70-72, 1074 Budapest',        hours:'H–P: 8:00–20:00' },
+    { id:4,  name:'GLS Csomagpont – V. ker.',      city:'Budapest',       zip:'1051', address:'Váci utca 40, 1051 Budapest',            hours:'H–P: 8:00–20:00' },
+    { id:5,  name:'GLS Csomagpont – XI. ker.',     city:'Budapest',       zip:'1117', address:'Október huszonharmadika u. 18, 1117 Budapest', hours:'H–P: 8:00–20:00' },
+    { id:6,  name:'GLS Csomagpont – XIII. ker.',   city:'Budapest',       zip:'1131', address:'Lehel út 9, 1131 Budapest',              hours:'H–P: 8:00–20:00' },
+    { id:7,  name:'GLS Csomagpont – Centrum',      city:'Debrecen',       zip:'4024', address:'Piac utca 11, 4024 Debrecen',            hours:'H–P: 8:00–18:00, Szo: 9:00–13:00' },
+    { id:8,  name:'GLS Csomagpont – Fórum',        city:'Debrecen',       zip:'4031', address:'Kiskereskedelmi sor 1, 4031 Debrecen',   hours:'H–P: 9:00–20:00' },
+    { id:9,  name:'GLS Csomagpont – Plaza',        city:'Miskolc',        zip:'3530', address:'Majláth utca 2, 3530 Miskolc',           hours:'H–V: 9:00–20:00' },
+    { id:10, name:'GLS Csomagpont – Árkád',        city:'Pécs',           zip:'7621', address:'Anna utca 1-5, 7621 Pécs',              hours:'H–V: 9:00–20:00' },
+    { id:11, name:'GLS Csomagpont – Interspar',    city:'Győr',           zip:'9027', address:'Budai út 1, 9027 Győr',                 hours:'H–P: 7:00–21:00, Szo: 7:00–20:00' },
+    { id:12, name:'GLS Csomagpont – Kossuth tér',  city:'Kecskemét',      zip:'6000', address:'Kossuth tér 1, 6000 Kecskemét',         hours:'H–P: 8:00–18:00' },
+    { id:13, name:'GLS Csomagpont – Centrum',      city:'Székesfehérvár', zip:'8000', address:'Palotai út 3, 8000 Székesfehérvár',     hours:'H–P: 8:00–18:00' },
+    { id:14, name:'GLS Csomagpont – Kossuth tér',  city:'Nyíregyháza',    zip:'4400', address:'Kossuth tér 5, 4400 Nyíregyháza',       hours:'H–P: 8:00–18:00' },
+    { id:15, name:'GLS Csomagpont – Interspar',    city:'Eger',           zip:'3300', address:'Mátyás király út 2, 3300 Eger',          hours:'H–V: 8:00–20:00' },
+    { id:16, name:'GLS Csomagpont – Centrum',      city:'Szombathely',    zip:'9700', address:'Fő tér 1, 9700 Szombathely',            hours:'H–P: 8:00–18:00' },
+    { id:17, name:'GLS Csomagpont – Árkád',        city:'Kaposvár',       zip:'7400', address:'Bajcsy-Zsilinszky u. 21, 7400 Kaposvár', hours:'H–P: 8:00–18:00' },
+    { id:18, name:'GLS Csomagpont – Centrum',      city:'Szolnok',        zip:'5000', address:'Baross Gábor út 5, 5000 Szolnok',        hours:'H–P: 8:00–18:00' },
+    { id:19, name:'GLS Csomagpont – SPAR',         city:'Zalaegerszeg',   zip:'8900', address:'Kossuth Lajos utca 19, 8900 Zalaegerszeg', hours:'H–P: 7:00–20:00' },
+    { id:20, name:'GLS Csomagpont – Tesco',        city:'Pécs',           zip:'7633', address:'Megyeri út 76, 7633 Pécs',               hours:'H–V: 6:00–22:00' },
+    { id:21, name:'GLS Csomagpont – Centrum',      city:'Veszprém',       zip:'8200', address:'Óváros tér 2, 8200 Veszprém',            hours:'H–P: 8:00–18:00' },
+    { id:22, name:'GLS Csomagpont – Plaza',        city:'Sopron',         zip:'9400', address:'Lackner Kristóf u. 38, 9400 Sopron',     hours:'H–P: 8:00–18:00' },
+    { id:23, name:'GLS Csomagpont – Centrum',      city:'Tatabánya',      zip:'2800', address:'Fő tér 1, 2800 Tatabánya',              hours:'H–P: 8:00–18:00' },
+    { id:24, name:'GLS Csomagpont – Tesco',        city:'Budaörs',        zip:'2040', address:'Kinizsi utca 2, 2040 Budaörs',           hours:'H–V: 6:00–22:00' },
+    { id:25, name:'GLS Csomagpont – Centrum',      city:'Érd',            zip:'2030', address:'Budai út 13, 2030 Érd',                 hours:'H–P: 8:00–18:00' },
+  ];
+
+  let shippingMethod = null;
+  let selectedPickup = null;
+  let pickupSearchTimer = null;
+  let lastPickupResults = [...PICKUP_POINTS];
+
+  function selectShipping(method) {
+    shippingMethod = method;
+    if (method !== 'pickup') selectedPickup = null;
+    document.querySelectorAll('.ship-opt').forEach(el =>
+      el.classList.toggle('selected', el.dataset.m === method)
+    );
+    document.getElementById('pickupPanel').style.display   = method === 'pickup' ? '' : 'none';
+    document.getElementById('customerPanel').style.display = '';
+    document.getElementById('addressPanel').style.display  = method === 'home' ? '' : 'none';
+    if (method === 'pickup') renderPickupList(PICKUP_POINTS.slice(0, 8));
+    renderShippingDisplay();
+  }
+
+  function onPickupInput(val) {
+    clearTimeout(pickupSearchTimer);
+    const q = val.trim();
+    if (/^\d{4}$/.test(q)) {
+      pickupSearchTimer = setTimeout(() => doPickupSearch(), 400);
+    } else {
+      renderPickupList(filterLocal(q));
+    }
+  }
+
+  async function doPickupSearch() {
+    const q = document.getElementById('pickupSearch').value.trim();
+    if (!q) { renderPickupList(PICKUP_POINTS.slice(0, 8)); return; }
+
+    const isZip = /^\d{3,4}$/.test(q);
+    const list  = document.getElementById('pickupList');
+    list.innerHTML = '<div style="padding:10px 12px;font-size:12px;color:#bbb;">Keresés…</div>';
+
+    try {
+      const param = isZip ? `zip=${encodeURIComponent(q)}` : `city=${encodeURIComponent(q)}`;
+      const r     = await fetch(`/api/gls-parcelshops?${param}`);
+      const shops = await r.json();
+      if (Array.isArray(shops) && shops.length > 0) {
+        lastPickupResults = shops;
+        renderPickupList(shops);
+        return;
+      }
+    } catch {}
+
+    renderPickupList(filterLocal(q));
+  }
+
+  function filterLocal(q) {
+    if (!q) return PICKUP_POINTS.slice(0, 8);
+    const s = q.toLowerCase();
+    return PICKUP_POINTS.filter(p =>
+      p.zip?.startsWith(s) ||
+      p.city.toLowerCase().includes(s) ||
+      p.name.toLowerCase().includes(s) ||
+      p.address.toLowerCase().includes(s)
+    );
+  }
+
+  function renderPickupList(points) {
+    lastPickupResults = points;
+    document.getElementById('pickupList').innerHTML = points.length
+      ? points.map((p, i) => `
+          <div class="pickup-item${selectedPickup === p.id ? ' selected' : ''}" onclick="selectPickupByIndex(${i})">
+            <div class="pickup-item-name">${p.name}</div>
+            <div class="pickup-item-addr">${p.address}</div>
+            ${p.hours ? `<div class="pickup-item-hours">${p.hours}</div>` : ''}
+          </div>`).join('')
+      : '<div style="padding:10px 12px;font-size:12px;color:#bbb;">Nincs találat. Próbálj más irányítószámot!</div>';
+  }
+
+  function selectPickupByIndex(i) {
+    const p = lastPickupResults[i];
+    if (!p) return;
+    selectedPickup = p.id;
+
+    document.getElementById('pickupSelectedContent').innerHTML = `
+      <div class="pickup-item-name">${p.name}</div>
+      <div class="pickup-item-addr">${p.address}</div>
+      ${p.hours ? `<div class="pickup-item-hours">${p.hours}</div>` : ''}`;
+
+    document.getElementById('pickupSearchView').style.display  = 'none';
+    document.getElementById('pickupSelectedView').style.display = '';
+
+    renderShippingDisplay();
+  }
+
+  function showPickupSearch() {
+    document.getElementById('pickupSelectedView').style.display = 'none';
+    document.getElementById('pickupSearchView').style.display   = '';
+    document.getElementById('pickupSearch').focus();
+    renderPickupList(lastPickupResults.length ? lastPickupResults : PICKUP_POINTS.slice(0, 8));
+  }
+
+  function renderShippingDisplay() {
+    const subtotal = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
+    const hasItems = cartItems.length > 0;
+    if (!hasItems) {
+      document.getElementById('sumShipping').textContent = '–';
+      document.getElementById('sumTotal').textContent    = '–';
+      return;
+    }
+    if (shippingMethod === 'pickup') {
+      document.getElementById('sumShipping').textContent = 'Ingyenes';
+      document.getElementById('sumTotal').textContent    = fmt(subtotal);
+    } else if (shippingMethod === 'home') {
+      document.getElementById('sumShipping').textContent = fmt(SHIPPING);
+      document.getElementById('sumTotal').textContent    = fmt(subtotal + SHIPPING);
+    } else {
+      document.getElementById('sumShipping').textContent = 'Válassz módot';
+      document.getElementById('sumTotal').textContent    = fmt(subtotal);
+    }
+  }
+
   /* ── DIALOG STATE ── */
   const DLG_COLORS = {
     'Barna':      { sub: 'Teljes kiőrlésű bőr · Barna',      img: 'https://www.figma.com/api/mcp/asset/12af8ff0-0870-4df1-9527-c4559cff28db' },
@@ -969,10 +1254,8 @@
 
     // summary
     const subtotal = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
-    const shipping = count > 0 ? SHIPPING : 0;
-    document.getElementById('sumSubtotal').textContent = fmt(subtotal);
-    document.getElementById('sumShipping').textContent = fmt(shipping);
-    document.getElementById('sumTotal').textContent = fmt(subtotal + shipping);
+    document.getElementById('sumSubtotal').textContent = count > 0 ? fmt(subtotal) : '–';
+    renderShippingDisplay();
 
     // update badge
     const badge = document.getElementById('cartBadge');
@@ -999,19 +1282,50 @@
   async function startPayment() {
     if (cartItems.length === 0) { alert('A kosarad üres!'); return; }
 
+    const existing = document.getElementById('payErrorBox');
+    if (existing) existing.remove();
+
+    if (!shippingMethod) { showPaymentError('Kérjük, válassz szállítási módot!'); return; }
+    if (shippingMethod === 'pickup' && !selectedPickup) { showPaymentError('Kérjük, válassz egy csomagpontot!'); return; }
+
+    const name  = document.getElementById('custName').value.trim();
+    const phone = document.getElementById('custPhone').value.trim();
+    if (!name || !phone) { showPaymentError('Kérjük, add meg a neved és telefonszámodat!'); return; }
+
+    if (shippingMethod === 'home') {
+      const zip    = document.getElementById('custZip').value.trim();
+      const city   = document.getElementById('custCity').value.trim();
+      const street = document.getElementById('custStreet').value.trim();
+      if (!zip || !city || !street) { showPaymentError('Kérjük, add meg a szállítási címet!'); return; }
+    }
+
     const btn = document.getElementById('btnPay');
     btn.disabled = true;
     btn.textContent = 'Feldolgozás…';
+
+    const body = { items: cartItems, shippingMethod, customerName: name, customerPhone: phone };
+    if (shippingMethod === 'pickup') {
+      const pp = lastPickupResults.find(p => p.id === selectedPickup)
+              || PICKUP_POINTS.find(p => p.id === selectedPickup);
+      body.pickupPointId      = selectedPickup;
+      body.pickupPointName    = pp?.name    || '';
+      body.pickupPointAddress = pp?.address || '';
+    } else {
+      body.shippingAddress = {
+        zip:    document.getElementById('custZip').value.trim(),
+        city:   document.getElementById('custCity').value.trim(),
+        street: document.getElementById('custStreet').value.trim(),
+      };
+    }
 
     try {
       const res  = await fetch('/api/create-checkout', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ items: cartItems }),
+        body:    JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok || !data.url) throw new Error(data.error || 'Szerver hiba.');
-      // Átirányítás a Stripe Checkout oldalra
       window.location.href = data.url;
     } catch (err) {
       btn.disabled = false;
@@ -1098,14 +1412,29 @@
       },
     }[status] || {};
 
-    const detailHtml = (status === 'success' && data) ? `
-      <div class="result-detail">
-        <div class="result-row total">
-          <span>Fizetett összeg</span>
-          <span>${fmt(data.amount_total)}</span>
-        </div>
-        ${data.customer_email ? `<div class="result-row"><span>E-mail</span><span>${data.customer_email}</span></div>` : ''}
-      </div>` : '';
+    let detailHtml = '';
+    if (status === 'success' && data) {
+      const isPickup = data.shipping_method === 'pickup';
+      const hasAddr  = data.ship_zip || data.ship_city || data.ship_street;
+      const shipLine = isPickup
+        ? (data.pickup_name ? `${data.pickup_name}${data.pickup_address ? '<br><span style="font-size:12px;color:#999;">' + data.pickup_address + '</span>' : ''}` : 'GLS Csomagpont')
+        : (hasAddr ? `${data.ship_zip} ${data.ship_city}, ${data.ship_street}` : 'GLS Házhozszállítás');
+
+      detailHtml = `
+        <div class="result-detail">
+          ${data.customer_name  ? `<div class="result-row"><span>Név</span><span>${data.customer_name}</span></div>` : ''}
+          ${data.customer_email ? `<div class="result-row"><span>E-mail</span><span>${data.customer_email}</span></div>` : ''}
+          ${data.customer_phone ? `<div class="result-row"><span>Telefon</span><span>${data.customer_phone}</span></div>` : ''}
+          <div class="result-row" style="align-items:flex-start;">
+            <span>${isPickup ? 'Csomagpont' : 'Szállítási cím'}</span>
+            <span style="text-align:right;max-width:200px;line-height:1.4;">${shipLine}</span>
+          </div>
+          <div class="result-row total">
+            <span>Fizetett összeg</span>
+            <span>${fmt(data.amount_total)}</span>
+          </div>
+        </div>`;
+    }
 
     card.innerHTML = `
       <div class="result-icon ${cfg.iconBg}">${cfg.icon}</div>
