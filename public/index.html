@@ -262,6 +262,134 @@
     }
     .btn-pay:hover { background:#6a4e3a; }
 
+    /* ── ADD ITEM DIALOG ── */
+    .dialog-overlay {
+      position:fixed; inset:0; z-index:600;
+      background:rgba(34,20,10,.55);
+      display:flex; align-items:center; justify-content:center;
+      padding:20px;
+      opacity:0; pointer-events:none;
+      transition:opacity .3s ease;
+    }
+    .dialog-overlay.open { opacity:1; pointer-events:all; }
+
+    .dialog-box {
+      background:#fff; border-radius:24px;
+      box-shadow:0 28px 72px rgba(59,38,24,.28);
+      display:flex; width:100%; max-width:880px;
+      height:520px; max-height:92vh; overflow:hidden; position:relative;
+      transform:translateY(28px) scale(.96);
+      transition:transform .38s cubic-bezier(.4,0,.2,1);
+    }
+    .dialog-overlay.open .dialog-box { transform:translateY(0) scale(1); }
+
+    .dialog-close {
+      position:absolute; top:14px; right:14px; z-index:10;
+      width:34px; height:34px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:22px; color:#aaa; cursor:pointer;
+      transition:background .2s, color .2s;
+    }
+    .dialog-close:hover { background:var(--bg); color:var(--text); }
+
+    /* Left – images */
+    .dialog-images {
+      flex:0 0 400px; display:flex; flex-direction:column;
+      background:var(--bg); border-radius:24px 0 0 24px; overflow:hidden;
+    }
+    .dialog-main-img {
+      flex:1; min-height:0; width:100%;
+      object-fit:cover; object-position:center;
+      transition:opacity .18s ease;
+    }
+    .dialog-thumbs {
+      flex:0 0 auto;
+      display:flex; gap:8px; padding:10px 12px 12px;
+    }
+    .dialog-thumb {
+      width:72px; height:72px; flex-shrink:0;
+      object-fit:cover; border-radius:10px;
+      cursor:pointer; opacity:.55;
+      border:2px solid transparent;
+      transition:opacity .2s, border-color .2s, transform .15s;
+    }
+    .dialog-thumb:hover { opacity:.85; transform:scale(1.05); }
+    .dialog-thumb.active { border-color:var(--mid); opacity:1; transform:scale(1); }
+
+    /* Right – info */
+    .dialog-info {
+      flex:1; padding:38px 36px 36px 32px;
+      display:flex; flex-direction:column; overflow-y:auto;
+    }
+    .dialog-name {
+      font-family:var(--serif); font-size:34px; line-height:1.1;
+      margin-bottom:6px;
+    }
+    .dialog-desc { font-size:14px; color:#999; margin-bottom:4px; }
+    .dialog-price {
+      font-family:var(--serif); font-size:26px; color:var(--mid);
+      margin-bottom:30px;
+    }
+
+    .dlg-section { margin-bottom:24px; }
+    .dlg-label {
+      font-size:11px; font-weight:600; letter-spacing:.08em;
+      text-transform:uppercase; color:#bbb; margin-bottom:10px;
+    }
+
+    .color-options { display:flex; gap:8px; flex-wrap:wrap; }
+    .color-chip {
+      display:flex; align-items:center; gap:8px;
+      padding:7px 16px; border-radius:50px;
+      border:1.5px solid rgba(0,0,0,.14);
+      font-size:14px; font-weight:500; font-family:var(--sans);
+      background:#fff; cursor:pointer;
+      transition:border-color .2s, background .2s, box-shadow .2s;
+    }
+    .color-chip:hover { border-color:var(--mid); }
+    .color-chip.selected {
+      border-color:var(--mid); background:var(--bg);
+      box-shadow:0 0 0 3px rgba(123,92,69,.15);
+    }
+    .color-swatch {
+      width:13px; height:13px; border-radius:50%;
+      border:1px solid rgba(0,0,0,.12); flex-shrink:0;
+    }
+
+    .dlg-qty-row { display:flex; align-items:center; gap:14px; }
+    .dlg-qty-val {
+      font-size:18px; font-weight:600;
+      min-width:24px; text-align:center;
+    }
+
+    .btn-add-item {
+      margin-top:auto; width:100%; height:52px;
+      background:var(--mid); color:#fff;
+      border:none; border-radius:12px;
+      font-family:var(--sans); font-weight:500; font-size:16px;
+      cursor:pointer; transition:background .25s, opacity .2s;
+    }
+    .btn-add-item:hover:not(:disabled) { background:#6a4e3a; }
+    .btn-add-item:disabled { opacity:.35; cursor:not-allowed; }
+
+    /* Cart empty-state add btn */
+    .btn-open-dialog {
+      display:inline-flex; align-items:center; gap:8px;
+      background:var(--mid); color:#fff;
+      border:none; border-radius:12px; height:52px; padding:0 32px;
+      font-family:var(--sans); font-weight:500; font-size:16px;
+      cursor:pointer; transition:background .25s; margin-top:24px;
+    }
+    .btn-open-dialog:hover { background:#6a4e3a; }
+
+    @media (max-width:720px) {
+      .dialog-box { flex-direction:column; height:auto; max-height:95vh; border-radius:20px; }
+      .dialog-images { flex:0 0 auto; border-radius:20px 20px 0 0; }
+      .dialog-main-img { flex:none; height:220px; }
+      .dialog-info { padding:24px 20px 24px; }
+      .dialog-name { font-size:26px; }
+    }
+
     /* ── ANIMATIONS ── */
     @keyframes fadeUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
     @keyframes fadeIn { from{opacity:0} to{opacity:1} }
@@ -281,10 +409,10 @@
 
       .section-label { font-size:38px; padding:40px 24px 10px; }
 
-      .about-section { padding:32px 24px; }
+      .about-section { padding:32px 24px; min-height:unset; }
       .about-inner { flex-direction:column; gap:32px; }
-      .about-img-wrap { width:100%; }
-      .about-img { width:280px; }
+      .about-img-wrap { width:100%; display:flex; justify-content:center; }
+      .about-img { width:100%; max-width:280px; height:auto; transform:rotate(-4deg); }
 
       #benefits { padding:48px 24px; }
       .benefits-title { font-size:36px; line-height:44px; }
@@ -373,7 +501,7 @@
       <!-- handle -->
       <path d="M11 10V8a5 5 0 0 1 10 0v2" stroke="#050401" stroke-width="1.8" stroke-linecap="round" fill="none"/>
     </svg>
-    <span class="cart-badge" id="cartBadge">3</span>
+    <span class="cart-badge zero" id="cartBadge">0</span>
   </button>
 
   <button class="hamburger" id="hamburger" onclick="toggleMenu()">
@@ -398,7 +526,7 @@
     <div class="hero-text">
       <h1 class="hero-title"><span class="nowrap">Több mint egy</span> pénztárca</h1>
       <p class="hero-body">Nem csupán tárgy, hanem társ az évek során, amely évről évre patinásabbá válik, és csak azt őrzi, ami igazán számít.</p>
-      <button class="btn-hero" onclick="showPage('cart')">
+      <button class="btn-hero" onclick="openDialog()">
         <span>Vásárlás</span>
 <span style="display:inline-block;width:1px;height:18px;background:rgba(226,217,200,0.5);margin:0 2px;"></span>
         <span>4.500 Ft</span>
@@ -494,7 +622,7 @@
       <p class="footer-sub">Minimalista, funkcionális és szépen kidolgozott pénztárca a pénzügyeid megsegítésére.</p>
     </div>
 
-    <button class="btn-shop reveal" onclick="showPage('cart')">
+    <button class="btn-shop reveal" onclick="openDialog()">
       Vásárlás
       <svg width="18" height="12" viewBox="0 0 18 12" fill="none">
         <path d="M1 6h16M11 1l5 5-5 5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -562,6 +690,80 @@
 </div>
 
 
+<!-- ═══════════════════════════════════
+     ADD ITEM DIALOG
+═══════════════════════════════════ -->
+<div id="addDialog" class="dialog-overlay" onclick="dlgOverlayClick(event)">
+  <div class="dialog-box">
+    <button class="dialog-close" onclick="closeDialog()" aria-label="Bezárás">✕</button>
+
+    <!-- Images -->
+    <div class="dialog-images">
+      <img id="dlgMainImg"
+        src="https://www.figma.com/api/mcp/asset/12af8ff0-0870-4df1-9527-c4559cff28db"
+        alt="FOLD pénztárca" class="dialog-main-img" />
+      <div class="dialog-thumbs">
+        <img class="dialog-thumb active"
+          src="https://www.figma.com/api/mcp/asset/12af8ff0-0870-4df1-9527-c4559cff28db"
+          alt="Barna" onmouseenter="dlgSetMain(this)" />
+        <img class="dialog-thumb"
+          src="https://www.figma.com/api/mcp/asset/b50804e4-77aa-4ba2-a4e1-d531fb0b7142"
+          alt="Sötétbarna" onmouseenter="dlgSetMain(this)" />
+        <img class="dialog-thumb"
+          src="https://www.figma.com/api/mcp/asset/d45995a9-006e-4c0d-a6b2-e63ecbfa6f48"
+          alt="Fekete" onmouseenter="dlgSetMain(this)" />
+        <img class="dialog-thumb"
+          src="https://www.figma.com/api/mcp/asset/a1a3c28f-29d1-446b-8fe5-fb095dcf655e"
+          alt="Részlet" onmouseenter="dlgSetMain(this)" />
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div class="dialog-info">
+      <div class="dialog-name">FOLD Pénztárca</div>
+      <div class="dialog-desc">Teljes kiőrlésű bőr · Kézzel varrt</div>
+      <div class="dialog-price">4.500 Ft</div>
+
+      <!-- Color -->
+      <div class="dlg-section">
+        <div class="dlg-label">Szín</div>
+        <div class="color-options">
+          <button class="color-chip" data-color="Barna"
+            data-img="https://www.figma.com/api/mcp/asset/12af8ff0-0870-4df1-9527-c4559cff28db"
+            onclick="dlgSelectColor(this)">
+            <span class="color-swatch" style="background:#8B6347;"></span>Barna
+          </button>
+          <button class="color-chip" data-color="Sötétbarna"
+            data-img="https://www.figma.com/api/mcp/asset/b50804e4-77aa-4ba2-a4e1-d531fb0b7142"
+            onclick="dlgSelectColor(this)">
+            <span class="color-swatch" style="background:#3b2618;"></span>Sötétbarna
+          </button>
+          <button class="color-chip" data-color="Fekete"
+            data-img="https://www.figma.com/api/mcp/asset/d45995a9-006e-4c0d-a6b2-e63ecbfa6f48"
+            onclick="dlgSelectColor(this)">
+            <span class="color-swatch" style="background:#1c1c1c;"></span>Fekete
+          </button>
+        </div>
+      </div>
+
+      <!-- Qty -->
+      <div class="dlg-section">
+        <div class="dlg-label">Darabszám</div>
+        <div class="dlg-qty-row">
+          <button class="qty-btn" onclick="dlgQtyChange(-1)">−</button>
+          <span class="dlg-qty-val" id="dlgQtyVal">1</span>
+          <button class="qty-btn" onclick="dlgQtyChange(1)">+</button>
+        </div>
+      </div>
+
+      <button class="btn-add-item" id="btnAddItem" onclick="dlgAddToCart()" disabled>
+        Hozzáadás a kosárhoz
+      </button>
+    </div>
+  </div>
+</div>
+
+
 <script>
   /* ── PAGE SWITCHER ── */
   function showPage(name) {
@@ -570,7 +772,7 @@
     window.scrollTo(0, 0);
     if (name === 'cart') renderCart();
     if (name === 'landing' && !document.getElementById('galleryFade').classList.contains('hidden')) {
-      requestAnimationFrame(initGallery);
+      requestAnimationFrame(() => requestAnimationFrame(initGallery));
     }
   }
 
@@ -597,10 +799,13 @@
     const grid = document.getElementById('galleryGrid');
     if (!grid) return;
     const fullH = grid.scrollHeight || grid.offsetHeight;
-    // show 75% — the fade covers the last ~35%, so bottom of row2 peeks out
+    if (!fullH) return;
+    wrap.style.transition = 'none';
     wrap.style.maxHeight = Math.round(fullH * 0.78) + 'px';
     wrap.style.overflow = 'hidden';
-    wrap.style.transition = 'max-height .7s cubic-bezier(.4,0,.2,1)';
+    requestAnimationFrame(() => {
+      wrap.style.transition = 'max-height .7s cubic-bezier(.4,0,.2,1)';
+    });
   }
   function expandGallery() {
     const wrap = document.getElementById('galleryWrap');
@@ -630,11 +835,85 @@
 
   /* ── CART STATE ── */
   const SHIPPING = 990;
-  let cartItems = [
-    { id: 1, name: 'FOLD Barna',      sub: 'Teljes kiőrlésű bőr · Barna',       price: 4500, qty: 1, img: 'https://www.figma.com/api/mcp/asset/12af8ff0-0870-4df1-9527-c4559cff28db' },
-    { id: 2, name: 'FOLD Sötétbarna', sub: 'Teljes kiőrlésű bőr · Sötétbarna',   price: 4500, qty: 1, img: 'https://www.figma.com/api/mcp/asset/b50804e4-77aa-4ba2-a4e1-d531fb0b7142' },
-    { id: 3, name: 'FOLD Fekete',     sub: 'Teljes kiőrlésű bőr · Fekete',        price: 4500, qty: 1, img: 'https://www.figma.com/api/mcp/asset/d45995a9-006e-4c0d-a6b2-e63ecbfa6f48' },
-  ];
+  let cartItems = [];
+
+  /* ── DIALOG STATE ── */
+  const DLG_COLORS = {
+    'Barna':      { sub: 'Teljes kiőrlésű bőr · Barna',      img: 'https://www.figma.com/api/mcp/asset/12af8ff0-0870-4df1-9527-c4559cff28db' },
+    'Sötétbarna': { sub: 'Teljes kiőrlésű bőr · Sötétbarna', img: 'https://www.figma.com/api/mcp/asset/b50804e4-77aa-4ba2-a4e1-d531fb0b7142' },
+    'Fekete':     { sub: 'Teljes kiőrlésű bőr · Fekete',      img: 'https://www.figma.com/api/mcp/asset/d45995a9-006e-4c0d-a6b2-e63ecbfa6f48' },
+  };
+  let dlgColor = null;
+  let dlgQty   = 1;
+
+  function openDialog() {
+    dlgColor = null;
+    dlgQty   = 1;
+    document.getElementById('dlgQtyVal').textContent = dlgQty;
+    document.querySelectorAll('.color-chip').forEach(b => b.classList.remove('selected'));
+    document.getElementById('btnAddItem').disabled = true;
+    document.getElementById('btnAddItem').textContent = 'Hozzáadás a kosárhoz';
+    // reset main image + active thumb to first
+    const thumbs = document.querySelectorAll('.dialog-thumb');
+    thumbs.forEach((t, i) => t.classList.toggle('active', i === 0));
+    document.getElementById('dlgMainImg').src = thumbs[0].src;
+    document.getElementById('addDialog').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDialog() {
+    document.getElementById('addDialog').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function dlgOverlayClick(e) {
+    if (e.target === document.getElementById('addDialog')) closeDialog();
+  }
+
+  function dlgSetMain(el) {
+    document.getElementById('dlgMainImg').src = el.src;
+    document.querySelectorAll('.dialog-thumb').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function dlgSelectColor(btn) {
+    document.querySelectorAll('.color-chip').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    dlgColor = btn.dataset.color;
+    // switch main image to this color's image
+    document.getElementById('dlgMainImg').src = btn.dataset.img;
+    document.querySelectorAll('.dialog-thumb').forEach(t => {
+      t.classList.toggle('active', t.src === btn.dataset.img);
+    });
+    dlgUpdateBtn();
+  }
+
+  function dlgQtyChange(delta) {
+    dlgQty = Math.max(1, dlgQty + delta);
+    document.getElementById('dlgQtyVal').textContent = dlgQty;
+    dlgUpdateBtn();
+  }
+
+  function dlgUpdateBtn() {
+    document.getElementById('btnAddItem').disabled = !dlgColor || dlgQty < 1;
+  }
+
+  function dlgAddToCart() {
+    if (!dlgColor) return;
+    const c = DLG_COLORS[dlgColor];
+    const existing = cartItems.find(i => i.name === 'FOLD ' + dlgColor);
+    if (existing) {
+      existing.qty += dlgQty;
+    } else {
+      cartItems.push({ id: Date.now(), name: 'FOLD ' + dlgColor, sub: c.sub, price: 4500, qty: dlgQty, img: c.img });
+    }
+    renderCart();
+    const btn = document.getElementById('btnAddItem');
+    btn.textContent = 'Hozzáadva! ✓';
+    setTimeout(closeDialog, 700);
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDialog(); });
 
   const fmt = n => n.toLocaleString('hu-HU') + ' Ft';
 
@@ -645,11 +924,11 @@
     const count = cartItems.length;
 
     // heading
-    const endings = ['elem', 'elem', 'elem'];
+    const totalQty = cartItems.reduce((s, i) => s + i.qty, 0);
     document.getElementById('cartSubheading').textContent =
-      count === 0 ? 'A kosarad üres.' :
-      count === 1 ? 'Egy elem van a kosaradban' :
-      count + ' elem van a kosaradban';
+      totalQty === 0 ? 'A kosarad üres.' :
+      totalQty === 1 ? '1 termék van a kosaradban' :
+      totalQty + ' termék van a kosaradban';
 
     // items
     container.innerHTML = cartItems.map(item => `
@@ -671,7 +950,21 @@
 
     // empty state
     if (count === 0) {
-      container.innerHTML = '<div style="font-family:var(--serif);font-size:22px;color:var(--muted);padding:40px 0;text-align:center;">A kosarad üres.</div>';
+      container.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;padding:48px 0;text-align:center;">
+          <div style="font-family:var(--serif);font-size:24px;color:var(--muted);margin-bottom:8px;">A kosarad üres.</div>
+          <div style="font-size:14px;color:#aaa;margin-bottom:24px;">Válassz egy pénztárcát és add hozzá a kosárhoz.</div>
+          <button class="btn-open-dialog" onclick="openDialog()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="white" stroke-width="2.2" stroke-linecap="round"/></svg>
+            Termék hozzáadása
+          </button>
+        </div>`;
+    } else {
+      container.innerHTML += `
+        <button class="btn-open-dialog" style="align-self:flex-start;margin-top:4px;" onclick="openDialog()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="white" stroke-width="2.2" stroke-linecap="round"/></svg>
+          Termék hozzáadása
+        </button>`;
     }
 
     // summary
@@ -682,7 +975,6 @@
     document.getElementById('sumTotal').textContent = fmt(subtotal + shipping);
 
     // update badge
-    const totalQty = cartItems.reduce((s, i) => s + i.qty, 0);
     const badge = document.getElementById('cartBadge');
     badge.textContent = totalQty;
     badge.classList.toggle('zero', totalQty === 0);

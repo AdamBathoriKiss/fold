@@ -55,6 +55,78 @@ A Stripe fizetési oldalon ezeket a teszt kártyaszámokat használd:
 
 ---
 
+## Stripe CLI – Webhook-ok helyi tesztelése
+
+A Stripe CLI-vel élő webhook-eseményeket tudsz a saját gépedreredirektálni, így az e-mail visszaigazoló helyi fejlesztés közben is lefut.
+
+### Stripe CLI letöltése
+
+Töltsd le a legfrissebb verziót az operációs rendszerednek megfelelően:
+
+**Linux (x86-64):**
+```bash
+curl -s https://packages.stripe.dev/api/security/keypair/stripe-cli-gpg/public | gpg --dearmor | sudo tee /usr/share/keyrings/stripe.gpg > /dev/null
+echo "deb [signed-by=/usr/share/keyrings/stripe.gpg] https://packages.stripe.dev/stripe-cli-debian-local stable main" | sudo tee /etc/apt/sources.list.d/stripe.list
+sudo apt update && sudo apt install stripe
+```
+
+**macOS:**
+```bash
+brew install stripe/stripe-cli/stripe
+```
+
+**Windows:**
+Töltsd le az `.exe`-t innen: https://docs.stripe.com/stripe-cli
+
+### Bejelentkezés
+
+```bash
+stripe login
+```
+
+Ez megnyit egy böngésző-ablakot — a Stripe-fiókodba kell belépni. Sikeres belépés után a CLI elmenti a hitelesítési adatokat.
+
+### Webhook-ok helyi átirányítása
+
+Az alábbi parancs a Stripe-tól érkező eseményeket a helyi szerveredre továbbítja:
+
+```bash
+stripe listen --forward-to localhost:3000/webhook
+```
+
+A terminál kiírja a **webhook signing secret**-et, például:
+```
+> Ready! Your webhook signing secret is whsec_abc123...
+```
+
+Másold be ezt az értéket a `.env` fájlba:
+```
+STRIPE_WEBHOOK_SECRET=whsec_abc123...
+```
+
+> A szervert indítsd újra az `.env` módosítása után (`npm run dev`).
+
+### Esemény manuális kiváltása (opcionális)
+
+Sikeres fizetés szimulálásához futtasd egy másik terminálban:
+
+```bash
+stripe trigger checkout.session.completed
+```
+
+### Fejlesztési munkafolyamat összefoglalva
+
+```
+1. npm run dev                              ← szerver indítása (3000-es port)
+2. stripe login                             ← egyszeri bejelentkezés
+3. stripe listen --forward-to \
+       localhost:3000/webhook               ← webhook-ok átirányítása
+4. Vásárlás a weboldalon teszt kártyával
+5. A terminálban látod az eseményt és az e-mail küldés naplóját
+```
+
+---
+
 ## Projekt struktúra
 
 ```
@@ -74,4 +146,3 @@ fold-shop/
 2. Másold ki az **éles** `sk_live_...` kulcsot
 3. `.env`-ben cseréld le: `STRIPE_SECRET_KEY=sk_live_...`
 4. `BASE_URL`-t állítsd az éles domain-re
-
