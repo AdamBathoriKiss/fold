@@ -27,7 +27,7 @@
       --nav-h: 64px;
     }
 
-    html { scroll-behavior: smooth; }
+    html { scroll-behavior: smooth; scroll-padding-top: var(--nav-h); }
     body { background: var(--bg); color: var(--text); font-family: var(--sans); overflow-x: hidden; }
 
     /* ── PAGES ── */
@@ -109,11 +109,11 @@
     .section-label { text-align:center; font-family:var(--serif); font-size:54px; color:var(--text); padding:60px 0 10px; }
 
     /* ── ABOUT ── */
-    #about { background:var(--bg); padding:60px 90px; display:flex; align-items:center; justify-content:center; overflow:visible; }
+    .about-section { background:var(--bg); padding:40px 90px; min-height:793px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
     .about-inner { display:flex; gap:80px; align-items:center; max-width:1100px; width:100%; }
-    .about-img-wrap { flex:0 0 auto; display:flex; align-items:center; justify-content:center; width:380px; }
+    .about-img-wrap { flex:0 0 auto; display:flex; align-items:center; justify-content:center; width:520px; }
     .about-img {
-      width:340px; height:auto; display:block;
+      width:480px; height:480px; object-fit:cover; display:block;
       transform: rotate(-8deg);
       filter: drop-shadow(30px 20px 28px rgba(0,0,0,0.38));
       border-radius:4px;
@@ -281,7 +281,7 @@
 
       .section-label { font-size:38px; padding:40px 24px 10px; }
 
-      #about { padding:32px 24px; }
+      .about-section { padding:32px 24px; }
       .about-inner { flex-direction:column; gap:32px; }
       .about-img-wrap { width:100%; }
       .about-img { width:280px; }
@@ -410,10 +410,10 @@
   </section>
 
   <!-- SECTION LABEL -->
-  <div class="section-label reveal">Miért mi?</div>
+  <div id="about" class="section-label reveal">Miért mi?</div>
 
   <!-- ABOUT -->
-  <section id="about">
+  <section class="about-section">
     <div class="about-inner">
       <div class="about-img-wrap reveal">
         <img class="about-img" src="https://www.figma.com/api/mcp/asset/fa3abae6-e86b-4174-b9cb-df8ff5d213bd" alt="FOLD pénztárca részlet" />
@@ -569,6 +569,9 @@
     document.getElementById(name + '-page').classList.add('active');
     window.scrollTo(0, 0);
     if (name === 'cart') renderCart();
+    if (name === 'landing' && !document.getElementById('galleryFade').classList.contains('hidden')) {
+      requestAnimationFrame(initGallery);
+    }
   }
 
   /* ── NAVBAR SCROLL ── */
