@@ -94,7 +94,7 @@ nav.scrolled { box-shadow: 0 2px 20px rgba(59,38,24,.12); }
 .hero-image img { width:480px; height:480px; object-fit:cover; object-position:center; }
 
 /* ── SECTION LABEL ── */
-.section-label { text-align:center; font-family:var(--serif); font-size:54px; color:var(--text); padding:60px 0 10px; }
+.section-label { text-align:center; font-family:var(--serif); font-size:54px; color:var(--text); padding:60px 0 10px; background:var(--bg); }
 
 /* ── ABOUT ── */
 .about-section { background:var(--bg); padding:40px 90px; min-height:793px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
@@ -378,8 +378,8 @@ nav.scrolled { box-shadow: 0 2px 20px rgba(59,38,24,.12); }
 
   #hero { flex-direction:column; align-items:center; padding:100px 24px 48px; min-height:unset; gap:32px; }
   .hero-text { max-width:100%; align-items:center; text-align:center; }
-  .hero-image { height:auto; }
-  .hero-image img { width:100%; height:auto; }
+  .hero-image { height:auto; width:100%; }
+  .hero-image img { width:100%; height:auto; max-width:360px; margin:0 auto; }
 
   .section-label { font-size:38px; padding:40px 24px 10px; }
 
