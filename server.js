@@ -4,7 +4,7 @@ const path       = require('path');
 const cors       = require('cors');
 const crypto     = require('crypto');
 const Stripe     = require('stripe');
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
 const app    = express();
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
@@ -181,10 +181,15 @@ function normalizeGlsShops(arr) {
   });
 }
 
-// ── RESEND EMAIL ──────────────────────────────────────────────────────────────
-function getResend() {
-  if (!process.env.RESEND_API_KEY) return null;
-  return new Resend(process.env.RESEND_API_KEY);
+// ── NODEMAILER TRANSPORT ──────────────────────────────────────────────────────
+function createTransport() {
+  if (!process.env.SMTP_HOST) return null;
+  return nodemailer.createTransport({
+    host:   process.env.SMTP_HOST,
+    port:   parseInt(process.env.SMTP_PORT || '465'),
+    secure: process.env.SMTP_SECURE !== 'false',
+    auth:   { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+  });
 }
 
 function calcDeliveryDate(method) {
@@ -199,9 +204,9 @@ function calcDeliveryDate(method) {
 }
 
 async function sendOrderConfirmation(session, glsTracking) {
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[EMAIL] RESEND_API_KEY nincs beállítva – e-mail kihagyva.');
+  const transport = createTransport();
+  if (!transport) {
+    console.warn('[EMAIL] SMTP nincs konfigurálva – e-mail kihagyva.');
     return;
   }
 
@@ -212,8 +217,8 @@ async function sendOrderConfirmation(session, glsTracking) {
 
   const amount = Math.round(session.amount_total / 100).toLocaleString('hu-HU');
 
-  const { error } = await resend.emails.send({
-    from:    process.env.RESEND_FROM || 'FOLD Shop <onboarding@resend.dev>',
+  await transport.sendMail({
+    from:    process.env.SMTP_FROM || process.env.SMTP_USER,
     to:      email,
     subject: 'FOLD – Sikeres rendelés visszaigazolása',
     html:    buildEmailHtml({
@@ -232,7 +237,6 @@ async function sendOrderConfirmation(session, glsTracking) {
     }),
   });
 
-  if (error) throw new Error(error.message);
   console.log(`[EMAIL] Visszaigazoló elküldve → ${email}`);
 }
 
@@ -518,8 +522,8 @@ app.listen(PORT, () => {
   if (!process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_')) {
     console.warn('  ⚠️  Állítsd be a STRIPE_SECRET_KEY értéket a .env fájlban!\n');
   }
-  if (!process.env.RESEND_API_KEY) {
-    console.warn('  ⚠️  RESEND_API_KEY nincs beállítva – e-mail visszaigazolás kikapcsolva.\n');
+  if (!process.env.SMTP_HOST) {
+    console.warn('  ⚠️  SMTP nincs konfigurálva – e-mail visszaigazolás kikapcsolva.\n');
   }
   console.log('  GLS Csomagpontok → map.gls-hungary.com (nyilvános API)\n');
   if (!GLS_USER || !GLS_PASS) {
