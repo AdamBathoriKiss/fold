@@ -335,8 +335,14 @@ function buildEmailHtml({ name, amount, sessionId, phone, method, pickupName, pi
 </html>`;
 }
 
+// ── GLOBAL MIDDLEWARE ─────────────────────────────────────────────────────────
+app.use(cors({ origin: process.env.ALLOWED_ORIGIN || '*' }));
+app.use('/webhook', express.raw({ type: '*/*' }));
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
 // ── STRIPE WEBHOOK ────────────────────────────────────────────────────────────
-app.post('/webhook', express.raw({ type: '*/*' }), async (req, res) => {
+app.post('/webhook', async (req, res) => {
   const sig    = req.headers['stripe-signature'];
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -384,10 +390,6 @@ app.post('/webhook', express.raw({ type: '*/*' }), async (req, res) => {
   res.json({ received: true });
 });
 
-// ── GLOBAL MIDDLEWARE ─────────────────────────────────────────────────────────
-app.use(cors({ origin: process.env.ALLOWED_ORIGIN || '*' }));
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
 
 // ── GLS CSOMAGPONT KERESŐ ─────────────────────────────────────────────────────
 app.get('/api/gls-parcelshops', async (req, res) => {
