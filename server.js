@@ -1,13 +1,14 @@
 require('dotenv').config();
-const express    = require('express');
-const path       = require('path');
-const cors       = require('cors');
-const crypto     = require('crypto');
-const Stripe     = require('stripe');
-const nodemailer = require('nodemailer');
+const express      = require('express');
+const path         = require('path');
+const cors         = require('cors');
+const crypto       = require('crypto');
+const Stripe       = require('stripe');
+const { Resend }   = require('resend');
 
 const app    = express();
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY);
 const PORT   = process.env.PORT || 3000;
 const BASE_URL     = process.env.BASE_URL || `http://localhost:${PORT}`;
 const SHIPPING_FEE   = parseInt(process.env.SHIPPING_FEE   || '2000');
@@ -181,16 +182,7 @@ function normalizeGlsShops(arr) {
   });
 }
 
-// ── NODEMAILER TRANSPORT ──────────────────────────────────────────────────────
-function createTransport() {
-  if (!process.env.SMTP_HOST) return null;
-  return nodemailer.createTransport({
-    host:   process.env.SMTP_HOST,
-    port:   parseInt(process.env.SMTP_PORT || '465'),
-    secure: process.env.SMTP_SECURE !== 'false',
-    auth:   { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-  });
-}
+// ── RESEND EMAIL ──────────────────────────────────────────────────────────────
 
 function calcDeliveryDate(method) {
   const d = new Date();
@@ -204,9 +196,8 @@ function calcDeliveryDate(method) {
 }
 
 async function sendOrderConfirmation(session, glsTracking) {
-  const transport = createTransport();
-  if (!transport) {
-    console.warn('[EMAIL] SMTP nincs konfigurálva – e-mail kihagyva.');
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('[EMAIL] RESEND_API_KEY nincs beállítva – e-mail kihagyva.');
     return;
   }
 
@@ -217,8 +208,8 @@ async function sendOrderConfirmation(session, glsTracking) {
 
   const amount = Math.round(session.amount_total / 100).toLocaleString('hu-HU');
 
-  await transport.sendMail({
-    from:    process.env.SMTP_FROM || process.env.SMTP_USER,
+  await resend.emails.send({
+    from:    process.env.RESEND_FROM || 'FOLD <noreply@fold.hu>',
     to:      email,
     subject: 'FOLD – Sikeres rendelés visszaigazolása',
     html:    buildEmailHtml({
@@ -385,7 +376,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 });
 
 // ── GLOBAL MIDDLEWARE ─────────────────────────────────────────────────────────
-app.use(cors());
+app.use(cors({ origin: process.env.ALLOWED_ORIGIN || '*' }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -522,8 +513,8 @@ app.listen(PORT, () => {
   if (!process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_')) {
     console.warn('  ⚠️  Állítsd be a STRIPE_SECRET_KEY értéket a .env fájlban!\n');
   }
-  if (!process.env.SMTP_HOST) {
-    console.warn('  ⚠️  SMTP nincs konfigurálva – e-mail visszaigazolás kikapcsolva.\n');
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('  ⚠️  RESEND_API_KEY nincs beállítva – e-mail visszaigazolás kikapcsolva.\n');
   }
   console.log('  GLS Csomagpontok → map.gls-hungary.com (nyilvános API)\n');
   if (!GLS_USER || !GLS_PASS) {

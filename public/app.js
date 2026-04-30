@@ -1,3 +1,5 @@
+const API_BASE = window.FOLD_API_BASE || '';
+
 /* ── PAGE SWITCHER ── */
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -116,7 +118,7 @@ async function doPickupSearch() {
   list.innerHTML = pickupHint('Keresés…');
   try {
     const param = isZip ? `zip=${encodeURIComponent(q)}` : `city=${encodeURIComponent(q)}`;
-    const r     = await fetch(`/api/gls-parcelshops?${param}`);
+    const r     = await fetch(`${API_BASE}/api/gls-parcelshops?${param}`);
     const shops = await r.json();
     if (Array.isArray(shops) && shops.length > 0) {
       renderPickupList(shops);
@@ -352,7 +354,7 @@ async function startPayment() {
   }
 
   try {
-    const res  = await fetch('/api/create-checkout', {
+    const res  = await fetch(`${API_BASE}/api/create-checkout`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(body),
@@ -409,7 +411,7 @@ async function handlePaymentResult() {
   if (status === 'cancel') { renderResultCard(card, 'cancel', null); return; }
 
   try {
-    const res  = await fetch(`/api/checkout-result?session_id=${session_id}`);
+    const res  = await fetch(`${API_BASE}/api/checkout-result?session_id=${session_id}`);
     const data = await res.json();
     renderResultCard(card, data.status === 'paid' ? 'success' : 'failed', data);
   } catch {
