@@ -164,7 +164,7 @@ nav.scrolled { box-shadow: 0 2px 20px rgba(59,38,24,.12); }
 .btn-collapse:hover { background:#6a4e3a; }
 
 /* ── FOOTER ── */
-#footer-cta { background:var(--dark); display:flex; flex-direction:column; align-items:center; gap:48px; padding:80px 90px 40px; }
+#footer-cta { background:var(--dark); display:flex; flex-direction:column; align-items:center; gap:48px; padding:80px 90px 40px; overflow:hidden; }
 .footer-header { display:flex; flex-direction:column; align-items:center; color:var(--white); text-align:center; gap:16px; }
 .footer-title { font-family:var(--serif); font-size:54px; line-height:62px; max-width:700px; }
 .footer-sub { font-size:18px; font-weight:200; max-width:580px; line-height:1.5; }
@@ -336,7 +336,7 @@ nav.scrolled { box-shadow: 0 2px 20px rgba(59,38,24,.12); }
 .dlg-qty-val { font-size:18px; font-weight:600; min-width:24px; text-align:center; }
 
 .btn-add-item {
-  margin-top:auto; width:100%; height:52px;
+  margin-top:auto; width:100%; height:56px;
   background:var(--mid); color:#fff;
   border:none; border-radius:12px;
   font-family:var(--sans); font-weight:500; font-size:16px;
