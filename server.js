@@ -346,6 +346,10 @@ app.post('/webhook', async (req, res) => {
   const sig    = req.headers['stripe-signature'];
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
 
+  console.log('[WEBHOOK DEBUG] sig:', sig ? sig.substring(0, 30) + '...' : 'HIÁNYZIK');
+  console.log('[WEBHOOK DEBUG] body Buffer?', Buffer.isBuffer(req.body), '| length:', req.body?.length);
+  console.log('[WEBHOOK DEBUG] secret prefix:', secret ? secret.substring(0, 12) + '...' : 'HIÁNYZIK');
+
   if (!secret) {
     console.warn('[WEBHOOK] STRIPE_WEBHOOK_SECRET nincs beállítva.');
     return res.status(400).send('Webhook secret hiányzik.');
