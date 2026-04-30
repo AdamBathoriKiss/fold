@@ -6,545 +6,8 @@
   <title>FOLD – Több mint egy pénztárca</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@200;400;500&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
-
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    img { display: block; max-width: 100%; }
-    a { text-decoration: none; color: inherit; }
-    button { cursor: pointer; border: none; background: none; font: inherit; }
-
-    :root {
-      --bg:    #f1e9de;
-      --dark:  #3b2618;
-      --mid:   #7b5c45;
-      --text:  #050401;
-      --muted: #2d3748;
-      --white: #ffffff;
-      --cream: #e2d9c8;
-      --serif: 'Instrument Serif', serif;
-      --sans:  'Geist', sans-serif;
-      --nav-h: 64px;
-    }
-
-    html { scroll-behavior: smooth; scroll-padding-top: var(--nav-h); }
-    body { background: var(--bg); color: var(--text); font-family: var(--sans); overflow-x: clip; }
-
-    /* ── PAGES ── */
-    .page { display: none; }
-    .page.active { display: block; }
-
-    /* ── NAVBAR ── */
-    nav {
-      position: fixed; inset: 0 0 auto 0; z-index: 200;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 90px; height: var(--nav-h);
-      background: var(--bg); transition: box-shadow .3s;
-    }
-    nav.scrolled { box-shadow: 0 2px 20px rgba(59,38,24,.12); }
-
-    .logo { font-family: var(--serif); font-size: 32px; letter-spacing:.04em; cursor:pointer; }
-    .nav-links { display: flex; gap: 36px; list-style: none; }
-    .nav-links a { font-family: var(--serif); font-size: 20px; transition: color .2s; }
-    .nav-links a:hover { color: var(--mid); }
-
-    .nav-cart { width:32px; height:32px; cursor:pointer; opacity:1; transition:opacity .2s; position:relative; display:inline-flex; align-items:center; justify-content:center; }
-    .nav-cart:hover { opacity:.75; }
-    .nav-cart svg { width:100%; height:100%; }
-    .cart-badge {
-      position:absolute; top:-6px; right:-7px;
-      background:var(--mid); color:#fff;
-      font-family:var(--sans); font-weight:500; font-size:10px;
-      width:18px; height:18px; border-radius:50%;
-      display:flex; align-items:center; justify-content:center;
-      pointer-events:none; line-height:1;
-      transition:transform .2s;
-    }
-    .cart-badge.zero { display:none; }
-
-    .hamburger { display:none; flex-direction:column; gap:5px; cursor:pointer; padding:4px; }
-    .hamburger span { display:block; width:24px; height:2px; background:var(--text); border-radius:2px; transition:all .3s; }
-    .hamburger.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
-    .hamburger.open span:nth-child(2) { opacity:0; }
-    .hamburger.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
-
-    .mobile-menu {
-      display:none; position:fixed; inset: var(--nav-h) 0 0 0;
-      background:var(--bg); z-index:190;
-      flex-direction:column; align-items:center; justify-content:center; gap:32px;
-    }
-    .mobile-menu.open { display:flex; }
-    .mobile-menu a { font-family:var(--serif); font-size:28px; }
-
-    /* ── HERO ── */
-    #hero {
-      padding-top: var(--nav-h);
-      min-height: 793px;
-      background: var(--bg);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding-left: 90px; padding-right: 90px;
-      gap: 40px; overflow: hidden;
-    }
-    .hero-text { flex:0 0 auto; max-width:551px; display:flex; flex-direction:column; gap:36px; animation:fadeUp .9s ease both; }
-    .hero-title { font-family:var(--serif); font-size:clamp(52px,8vw,110px); line-height:1.0; }
-    .hero-title .nowrap { white-space:nowrap; display:inline; }
-    .hero-body { font-size:20px; line-height:30px; font-weight:400; animation:fadeUp .9s .15s ease both; }
-
-    .btn-hero {
-      display:inline-flex; align-items:center; justify-content:space-between;
-      background:var(--mid); color:var(--cream);
-      border-radius:50px; height:48px; width:210px; padding:0 20px;
-      font-weight:500; font-size:16px; font-family:var(--sans);
-      border:none; cursor:pointer; transition:background .25s;
-      animation:fadeUp .9s .3s ease both;
-    }
-    .btn-hero:hover { background:#6a4e3a; }
-
-    .hero-image { flex:0 0 auto; display:flex; align-items:flex-end; height:620px; animation:fadeIn 1.1s .2s ease both; }
-    .hero-image img { width:480px; height:480px; object-fit:cover; object-position:center; }
-
-    /* ── SECTION LABEL ── */
-    .section-label { text-align:center; font-family:var(--serif); font-size:54px; color:var(--text); padding:60px 0 10px; }
-
-    /* ── ABOUT ── */
-    .about-section { background:var(--bg); padding:40px 90px; min-height:793px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
-    .about-inner { display:flex; gap:80px; align-items:center; max-width:1100px; width:100%; }
-    .about-img-wrap { flex:0 0 auto; display:flex; align-items:center; justify-content:center; width:520px; }
-    .about-img {
-      width:480px; height:480px; object-fit:cover; display:block;
-      transform: rotate(-8deg);
-      filter: drop-shadow(30px 20px 28px rgba(0,0,0,0.38));
-      border-radius:4px;
-    }
-    .about-list { flex:1 1 auto; display:flex; flex-direction:column; }
-    .about-item { padding:18px 0; border-bottom:1px solid rgba(59,38,24,.12); }
-    .about-item:last-child { border-bottom:none; }
-    .about-num { font-family:var(--serif); font-size:26px; color:var(--muted); line-height:1; margin-bottom:2px; }
-    .about-title { font-family:var(--serif); font-size:26px; color:var(--muted); line-height:1.2; margin-bottom:6px; }
-    .about-desc { font-size:18px; line-height:28px; font-weight:400; }
-
-    /* ── BENEFITS ── */
-    #benefits { background:var(--dark); padding:65px 90px; display:flex; align-items:center; justify-content:center; }
-    .benefits-inner { display:flex; flex-direction:column; align-items:center; gap:56px; width:100%; }
-    .benefits-title { font-family:var(--serif); font-size:54px; line-height:62px; color:var(--white); text-align:center; max-width:620px; }
-    .benefits-grid { display:flex; align-items:center; gap:40px; flex-wrap:wrap; justify-content:center; }
-    .benefit { display:flex; flex-direction:column; gap:10px; color:var(--white); }
-    .benefit-num { font-family:var(--serif); font-size:64px; line-height:1; }
-    .benefit-desc { font-size:18px; font-weight:200; max-width:240px; line-height:1.4; }
-    .benefit-divider { width:1px; height:70px; background:rgba(255,255,255,.25); flex-shrink:0; }
-
-    /* ── GALLERY ── */
-    #gallery { background:var(--bg); padding:0 90px 60px; display:flex; flex-direction:column; align-items:center; }
-
-    .gallery-header { width:100%; max-width:1100px; padding:48px 0 32px; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center; }
-    .gallery-title { font-family:var(--serif); font-size:54px; line-height:62px; }
-    .gallery-sub { font-size:18px; font-weight:400; color:var(--muted); }
-
-    .gallery-wrap { width:100%; max-width:1100px; position:relative; }
-
-    /* all 4 images in a 2x2 grid always rendered */
-    .gallery-grid-all { display:grid; grid-template-columns:1fr 1fr; gap:12px; width:100%; }
-    .gallery-grid-all img { width:100%; aspect-ratio:1/1; object-fit:cover; display:block; }
-
-    /* Fade overlay: covers bottom ~35% of the full 2x2 grid, from transparent to bg */
-    .gallery-fade {
-      position:absolute; left:0; right:0; bottom:0;
-      height:38%;
-      background:linear-gradient(to bottom, transparent 0%, var(--bg) 80%);
-      display:flex; align-items:flex-end; justify-content:center; padding-bottom:24px;
-      transition:opacity .5s;
-      pointer-events:none;
-    }
-    .gallery-fade > * { pointer-events:all; }
-    .gallery-fade.hidden { opacity:0; pointer-events:none; }
-
-    .btn-gallery {
-      display:inline-flex; align-items:center; justify-content:center;
-      background:var(--mid); color:var(--cream);
-      border-radius:50px; height:48px; padding:0 36px;
-      font-weight:500; font-size:16px; font-family:var(--sans);
-      border:none; cursor:pointer; transition:background .25s;
-    }
-    .btn-gallery:hover { background:#6a4e3a; }
-
-    .btn-collapse {
-      display:none; margin:20px auto 0;
-      align-items:center; justify-content:center;
-      background:var(--mid); color:var(--cream);
-      border-radius:50px; height:48px; padding:0 36px;
-      font-weight:500; font-size:16px; font-family:var(--sans);
-      border:none; cursor:pointer; transition:background .25s;
-    }
-    .btn-collapse.visible { display:flex; }
-    .btn-collapse:hover { background:#6a4e3a; }
-
-    /* ── FOOTER ── */
-    #footer-cta { background:var(--dark); display:flex; flex-direction:column; align-items:center; gap:48px; padding:80px 90px 40px; }
-    .footer-header { display:flex; flex-direction:column; align-items:center; color:var(--white); text-align:center; gap:16px; }
-    .footer-title { font-family:var(--serif); font-size:54px; line-height:62px; max-width:700px; }
-    .footer-sub { font-size:18px; font-weight:200; max-width:580px; line-height:1.5; }
-
-    .btn-shop {
-      display:inline-flex; align-items:center; justify-content:center; gap:8px;
-      background:var(--mid); color:var(--white);
-      border:1px solid #000; border-radius:10px;
-      height:48px; padding:0 28px;
-      font-weight:500; font-size:16px; font-family:var(--sans);
-      cursor:pointer; transition:background .25s;
-    }
-    .btn-shop:hover { background:#6a4e3a; }
-
-    .footer-divider { width:100%; height:1px; background:rgba(255,255,255,.2); }
-    .footer-bottom {
-      display:grid; grid-template-columns:1fr auto 1fr;
-      align-items:center; width:100%; max-width:1100px;
-      color:var(--white); font-weight:500; font-size:15px; gap:20px;
-    }
-    .footer-links { display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
-    .footer-links a { color:var(--white); transition:opacity .2s; }
-    .footer-links a:hover { opacity:.7; }
-    .footer-logo { font-family:var(--serif); font-size:36px; text-align:center; }
-    .footer-copy { text-align:right; color:rgba(255,255,255,.65); font-size:13px; }
-
-    /* ── CART PAGE ── */
-    #cart-page { padding-top:var(--nav-h); min-height:100vh; background:var(--bg); }
-    .cart-inner { max-width:1200px; margin:0 auto; padding:40px 40px 80px; }
-
-    .cart-back { display:flex; align-items:center; gap:10px; cursor:pointer; margin-bottom:20px; color:var(--text); }
-    .cart-back svg { width:22px; height:22px; }
-    .cart-back span { font-family:var(--serif); font-weight:400; font-size:18px; }
-
-    .cart-divider-top { height:1px; background:rgba(0,0,0,.15); margin-bottom:28px; }
-    .cart-heading { font-family:var(--serif); font-weight:400; font-size:22px; margin-bottom:4px; }
-    .cart-subheading { font-size:15px; font-weight:400; color:#666; margin-bottom:28px; font-family:var(--sans); }
-
-    .cart-layout { display:grid; grid-template-columns:1fr 380px; gap:32px; align-items:start; }
-    .cart-items { display:flex; flex-direction:column; gap:20px; }
-
-    .cart-item {
-      background:var(--white); border-radius:15px;
-      box-shadow:0 1px 6px rgba(0,0,0,.12);
-      display:flex; align-items:center;
-      padding:12px 20px 12px 12px; gap:16px;
-    }
-    .cart-item-img { width:80px; height:80px; border-radius:10px; object-fit:cover; flex-shrink:0; }
-    .cart-item-info { flex:1; }
-    .cart-item-name { font-family:var(--serif); font-weight:400; font-size:18px; }
-    .cart-item-sub { font-size:13px; color:#888; margin-top:3px; }
-
-    .cart-item-qty { display:flex; align-items:center; gap:8px; font-size:16px; font-weight:600; }
-    .qty-btn {
-      width:28px; height:28px; border-radius:50%;
-      background:var(--bg); border:1px solid rgba(0,0,0,.15);
-      font-size:18px; display:flex; align-items:center; justify-content:center;
-      cursor:pointer; transition:background .2s;
-    }
-    .qty-btn:hover { background:var(--cream); }
-
-    .cart-item-price { font-family:var(--sans); font-weight:500; font-size:15px; color:var(--muted); min-width:80px; text-align:right; }
-    .trash-btn { padding:4px; color:#bbb; transition:color .2s; }
-    .trash-btn:hover { color:#c0392b; }
-    .trash-btn svg { width:22px; height:22px; }
-
-    .cart-summary {
-      background:var(--white); border-radius:20px; padding:28px 20px;
-      display:flex; flex-direction:column; gap:16px;
-      position:sticky; top:calc(var(--nav-h) + 20px);
-      max-height:calc(100vh - var(--nav-h) - 40px);
-      overflow-y:auto;
-      align-self:start;
-    }
-    .cart-summary::-webkit-scrollbar { width:4px; }
-    .cart-summary::-webkit-scrollbar-thumb { background:rgba(0,0,0,.15); border-radius:4px; }
-    .summary-title { font-family:var(--serif); font-weight:400; font-size:22px; text-align:center; }
-    .summary-divider { height:1px; background:rgba(0,0,0,.1); }
-    .summary-rows { display:flex; flex-direction:column; gap:10px; }
-    .summary-row { display:flex; justify-content:space-between; font-family:var(--sans); font-size:14px; font-weight:500; }
-    .summary-row.total { font-weight:600; font-size:15px; }
-    .btn-pay {
-      width:100%; background:var(--mid); color:var(--white);
-      border:none; border-radius:12px; height:56px;
-      font-family:var(--sans); font-weight:500; font-size:16px;
-      cursor:pointer; transition:background .25s;
-    }
-    .btn-pay:hover { background:#6a4e3a; }
-
-    /* ── ADD ITEM DIALOG ── */
-    .dialog-overlay {
-      position:fixed; inset:0; z-index:600;
-      background:rgba(34,20,10,.55);
-      display:flex; align-items:center; justify-content:center;
-      padding:20px;
-      opacity:0; pointer-events:none;
-      transition:opacity .3s ease;
-    }
-    .dialog-overlay.open { opacity:1; pointer-events:all; }
-
-    .dialog-box {
-      background:#fff; border-radius:24px;
-      box-shadow:0 28px 72px rgba(59,38,24,.28);
-      display:flex; width:100%; max-width:880px;
-      height:520px; max-height:92vh; overflow:hidden; position:relative;
-      transform:translateY(28px) scale(.96);
-      transition:transform .38s cubic-bezier(.4,0,.2,1);
-    }
-    .dialog-overlay.open .dialog-box { transform:translateY(0) scale(1); }
-
-    .dialog-close {
-      position:absolute; top:14px; right:14px; z-index:10;
-      width:34px; height:34px; border-radius:50%;
-      display:flex; align-items:center; justify-content:center;
-      font-size:22px; color:#aaa; cursor:pointer;
-      transition:background .2s, color .2s;
-    }
-    .dialog-close:hover { background:var(--bg); color:var(--text); }
-
-    /* Left – images */
-    .dialog-images {
-      flex:0 0 400px; display:flex; flex-direction:column;
-      background:var(--bg); border-radius:24px 0 0 24px; overflow:hidden;
-    }
-    .dialog-main-img {
-      flex:1; min-height:0; width:100%;
-      object-fit:cover; object-position:center;
-      transition:opacity .18s ease;
-    }
-    .dialog-thumbs {
-      flex:0 0 auto;
-      display:flex; gap:8px; padding:10px 12px 12px;
-    }
-    .dialog-thumb {
-      width:72px; height:72px; flex-shrink:0;
-      object-fit:cover; border-radius:10px;
-      cursor:pointer; opacity:.55;
-      border:2px solid transparent;
-      transition:opacity .2s, border-color .2s, transform .15s;
-    }
-    .dialog-thumb:hover { opacity:.85; transform:scale(1.05); }
-    .dialog-thumb.active { border-color:var(--mid); opacity:1; transform:scale(1); }
-
-    /* Right – info */
-    .dialog-info {
-      flex:1; padding:38px 36px 36px 32px;
-      display:flex; flex-direction:column; overflow-y:auto;
-    }
-    .dialog-name {
-      font-family:var(--serif); font-size:34px; line-height:1.1;
-      margin-bottom:6px;
-    }
-    .dialog-desc { font-size:14px; color:#999; margin-bottom:4px; }
-    .dialog-price {
-      font-family:var(--serif); font-size:26px; color:var(--mid);
-      margin-bottom:30px;
-    }
-
-    .dlg-section { margin-bottom:24px; }
-    .dlg-label {
-      font-size:11px; font-weight:600; letter-spacing:.08em;
-      text-transform:uppercase; color:#bbb; margin-bottom:10px;
-    }
-
-    .color-options { display:flex; gap:8px; flex-wrap:wrap; }
-    .color-chip {
-      display:flex; align-items:center; gap:8px;
-      padding:7px 16px; border-radius:50px;
-      border:1.5px solid rgba(0,0,0,.14);
-      font-size:14px; font-weight:500; font-family:var(--sans);
-      background:#fff; cursor:pointer;
-      transition:border-color .2s, background .2s, box-shadow .2s;
-    }
-    .color-chip:hover { border-color:var(--mid); }
-    .color-chip.selected {
-      border-color:var(--mid); background:var(--bg);
-      box-shadow:0 0 0 3px rgba(123,92,69,.15);
-    }
-    .color-swatch {
-      width:13px; height:13px; border-radius:50%;
-      border:1px solid rgba(0,0,0,.12); flex-shrink:0;
-    }
-
-    .dlg-qty-row { display:flex; align-items:center; gap:14px; }
-    .dlg-qty-val {
-      font-size:18px; font-weight:600;
-      min-width:24px; text-align:center;
-    }
-
-    .btn-add-item {
-      margin-top:auto; width:100%; height:52px;
-      background:var(--mid); color:#fff;
-      border:none; border-radius:12px;
-      font-family:var(--sans); font-weight:500; font-size:16px;
-      cursor:pointer; transition:background .25s, opacity .2s;
-    }
-    .btn-add-item:hover:not(:disabled) { background:#6a4e3a; }
-    .btn-add-item:disabled { opacity:.35; cursor:not-allowed; }
-
-    /* Cart empty-state add btn */
-    .btn-open-dialog {
-      display:inline-flex; align-items:center; gap:8px;
-      background:var(--mid); color:#fff;
-      border:none; border-radius:12px; height:52px; padding:0 32px;
-      font-family:var(--sans); font-weight:500; font-size:16px;
-      cursor:pointer; transition:background .25s; margin-top:24px;
-    }
-    .btn-open-dialog:hover { background:#6a4e3a; }
-
-    @media (max-width:720px) {
-      .dialog-box { flex-direction:column; height:auto; max-height:95vh; border-radius:20px; }
-      .dialog-images { flex:0 0 auto; border-radius:20px 20px 0 0; }
-      .dialog-main-img { flex:none; height:220px; }
-      .dialog-info { padding:24px 20px 24px; }
-      .dialog-name { font-size:26px; }
-    }
-
-    /* ── ANIMATIONS ── */
-    @keyframes fadeUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-    .reveal { opacity:0; transform:translateY(36px); transition:opacity .7s ease,transform .7s ease; }
-    .reveal.visible { opacity:1; transform:translateY(0); }
-
-    /* ── RESPONSIVE ── */
-    @media (max-width: 900px) {
-      nav { padding:0 24px; }
-      .nav-links { display:none; }
-      .hamburger { display:flex; }
-
-      #hero { flex-direction:column; align-items:center; padding:100px 24px 48px; min-height:unset; gap:32px; }
-      .hero-text { max-width:100%; align-items:center; text-align:center; }
-      .hero-image { height:auto; }
-      .hero-image img { width:100%; height:auto; }
-
-      .section-label { font-size:38px; padding:40px 24px 10px; }
-
-      .about-section { padding:32px 24px; min-height:unset; }
-      .about-inner { flex-direction:column; gap:32px; }
-      .about-img-wrap { width:100%; display:flex; justify-content:center; }
-      .about-img { width:100%; max-width:280px; height:auto; transform:rotate(-4deg); }
-
-      #benefits { padding:48px 24px; }
-      .benefits-title { font-size:36px; line-height:44px; }
-      .benefit-divider { display:none; }
-      .benefit { align-items:center; text-align:center; }
-
-      #gallery { padding:0 24px 40px; }
-      .gallery-header { padding:32px 0 16px; }
-      .gallery-title { font-size:36px; line-height:44px; }
-
-      #footer-cta { padding:60px 24px 40px; gap:32px; }
-      .footer-title { font-size:36px; line-height:44px; }
-      .footer-bottom { grid-template-columns:1fr; text-align:center; gap:12px; }
-      .footer-links { justify-content:center; }
-      .footer-copy { text-align:center; }
-
-      .cart-inner { padding:24px 16px 60px; }
-      .cart-layout { grid-template-columns:1fr; }
-    }
-
-    @media (max-width: 480px) {
-      .gallery-row1 { grid-template-columns:1fr; }
-      .gallery-row2 { grid-template-columns:1fr; }
-      .cart-item { flex-wrap:wrap; }
-    }
-
-    /* ── PAYMENT RESULT PAGE ── */
-    #result-page { padding-top:var(--nav-h); min-height:100vh; background:var(--bg); align-items:center; justify-content:center; }
-    #result-page.active { display:flex; }
-    .result-card {
-      background:var(--white); border-radius:24px;
-      box-shadow:0 8px 40px rgba(59,38,24,.12);
-      padding:60px 56px; max-width:520px; width:100%;
-      display:flex; flex-direction:column; align-items:center; gap:24px;
-      text-align:center; margin:40px 24px;
-    }
-    .result-icon { width:80px; height:80px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-    .result-icon.success { background:#e8f5e9; }
-    .result-icon.failed  { background:#fdecea; }
-    .result-icon.pending { background:#fff8e1; }
-    .result-icon svg { width:40px; height:40px; }
-    .result-title { font-family:var(--serif); font-size:36px; color:var(--text); }
-    .result-sub   { font-size:17px; line-height:1.6; color:var(--muted); max-width:380px; }
-    .result-order { font-size:13px; font-weight:500; color:#aaa; letter-spacing:.05em; }
-    .result-detail {
-      background:var(--bg); border-radius:14px; padding:20px 24px;
-      width:100%; display:flex; flex-direction:column; gap:8px; text-align:left;
-    }
-    .result-row { display:flex; justify-content:space-between; font-size:15px; font-weight:500; }
-    .result-row.total { font-family:var(--serif); font-size:18px; border-top:1px solid rgba(59,38,24,.1); padding-top:10px; margin-top:4px; }
-    .btn-back-home {
-      display:inline-flex; align-items:center; gap:8px; justify-content:center;
-      background:var(--mid); color:var(--white);
-      border:none; border-radius:50px; height:50px; padding:0 36px;
-      font-family:var(--sans); font-weight:500; font-size:16px;
-      cursor:pointer; transition:background .25s; width:100%;
-    }
-    .btn-back-home:hover { background:#6a4e3a; }
-
-    .pay-spinner {
-      width:48px; height:48px; border:4px solid rgba(123,92,69,.2);
-      border-top-color:var(--mid); border-radius:50%;
-      animation:spin .8s linear infinite;
-    }
-    @keyframes spin { to { transform:rotate(360deg); } }
-
-    /* ── SZÁLLÍTÁS + FORM ── */
-    .ship-label { font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:#bbb; margin-bottom:10px; }
-    .ship-opts { display:flex; flex-direction:column; gap:8px; }
-    .ship-opt {
-      width:100%; display:flex; align-items:center; gap:10px;
-      padding:11px 14px; border-radius:12px;
-      border:1.5px solid rgba(0,0,0,.1); background:#fff;
-      cursor:pointer; text-align:left; font:inherit;
-      transition:border-color .2s, background .2s, box-shadow .2s;
-    }
-    .ship-opt:hover { border-color:var(--mid); }
-    .ship-opt.selected { border-color:var(--mid); background:var(--bg); box-shadow:0 0 0 3px rgba(123,92,69,.12); }
-    .ship-opt-icon { width:32px; height:32px; background:var(--bg); border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--mid); }
-    .ship-opt.selected .ship-opt-icon { background:var(--cream); }
-    .ship-opt-body { flex:1; display:flex; flex-direction:column; gap:2px; }
-    .ship-opt-name { font-size:13px; font-weight:500; color:var(--text); }
-    .ship-opt-price { font-size:12px; color:var(--mid); font-weight:600; }
-    .ship-opt-radio { width:18px; height:18px; border-radius:50%; border:2px solid rgba(0,0,0,.15); flex-shrink:0; transition:border-color .2s, background .2s; position:relative; }
-    .ship-opt.selected .ship-opt-radio { border-color:var(--mid); background:var(--mid); }
-    .ship-opt.selected .ship-opt-radio::after { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:6px; height:6px; border-radius:50%; background:#fff; }
-
-    .pickup-panel { display:flex; flex-direction:column; margin-top:10px; }
-    .pickup-search {
-      width:100%; padding:9px 12px; border-radius:10px;
-      border:1.5px solid rgba(0,0,0,.1); background:#fff;
-      font-family:var(--sans); font-size:13px; color:var(--text);
-      outline:none; transition:border-color .2s; margin-bottom:8px; box-sizing:border-box;
-    }
-    .pickup-search:focus { border-color:var(--mid); }
-    .pickup-search::placeholder { color:#bbb; }
-    .pickup-list { max-height:190px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
-    .pickup-list::-webkit-scrollbar { width:4px; }
-    .pickup-list::-webkit-scrollbar-thumb { background:rgba(0,0,0,.15); border-radius:4px; }
-    .pickup-item {
-      padding:10px 12px; border-radius:10px; border:1.5px solid rgba(0,0,0,.08);
-      cursor:pointer; transition:border-color .2s, background .2s; background:#fff; flex-shrink:0;
-    }
-    .pickup-item:hover { border-color:var(--mid); }
-    .pickup-item.selected { border-color:var(--mid); background:var(--bg); }
-    .pickup-item-name { font-size:12px; font-weight:600; color:var(--text); }
-    .pickup-item-addr { font-size:11px; color:#999; margin-top:2px; }
-    .pickup-item-hours { font-size:11px; color:var(--mid); margin-top:1px; }
-
-    .form-section-label { font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:#bbb; margin-bottom:8px; }
-    .form-input {
-      width:100%; padding:10px 12px; border-radius:10px;
-      border:1.5px solid rgba(0,0,0,.1); background:#fff;
-      font-family:var(--sans); font-size:13px; color:var(--text);
-      outline:none; transition:border-color .2s; margin-bottom:8px; display:block; box-sizing:border-box;
-    }
-    .form-input:focus { border-color:var(--mid); }
-    .form-input::placeholder { color:#bbb; }
-    .form-row { display:flex; gap:8px; margin-bottom:8px; }
-    .form-row .form-input { flex:1; margin-bottom:0; }
-    .form-row .form-input.zip { flex:0 0 90px; }
-
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@200;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
 
@@ -560,10 +23,8 @@
   </ul>
 
   <button class="nav-cart" aria-label="Kosár" onclick="showPage('cart')" id="navCartBtn">
-    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- bag body -->
+    <svg viewBox="0 0 32 32" fill="none">
       <path d="M6 10h20l-2 16H8L6 10z" stroke="#050401" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
-      <!-- handle -->
       <path d="M11 10V8a5 5 0 0 1 10 0v2" stroke="#050401" stroke-width="1.8" stroke-linecap="round" fill="none"/>
     </svg>
     <span class="cart-badge zero" id="cartBadge">0</span>
@@ -593,23 +54,21 @@
       <p class="hero-body">Nem csupán tárgy, hanem társ az évek során, amely évről évre patinásabbá válik, és csak azt őrzi, ami igazán számít.</p>
       <button class="btn-hero" onclick="openDialog()">
         <span>Vásárlás</span>
-<span style="display:inline-block;width:1px;height:18px;background:rgba(226,217,200,0.5);margin:0 2px;"></span>
+        <span style="display:inline-block;width:1px;height:18px;background:rgba(226,217,200,0.5);margin:0 2px;"></span>
         <span>4.500 Ft</span>
       </button>
     </div>
     <div class="hero-image">
-      <img src="https://www.figma.com/api/mcp/asset/9da660b3-e916-4370-b936-3427390cd0da" alt="FOLD pénztárca" />
+      <img src="/images/hero.png" alt="FOLD pénztárca" />
     </div>
   </section>
 
-  <!-- SECTION LABEL -->
-  <div id="about" class="section-label reveal">Miért mi?</div>
-
   <!-- ABOUT -->
+  <div id="about" class="section-label reveal">Miért mi?</div>
   <section class="about-section">
     <div class="about-inner">
       <div class="about-img-wrap reveal">
-        <img class="about-img" src="https://www.figma.com/api/mcp/asset/fa3abae6-e86b-4174-b9cb-df8ff5d213bd" alt="FOLD pénztárca részlet" />
+        <img class="about-img" src="/images/about.png" alt="FOLD pénztárca részlet" loading="lazy" />
       </div>
       <div class="about-list reveal">
         <div class="about-item">
@@ -662,25 +121,20 @@
     </div>
 
     <div class="gallery-wrap" id="galleryWrap">
-      <!-- All 4 images always in DOM, clip applied to wrap -->
       <div class="gallery-grid-all reveal" id="galleryGrid">
-        <img src="https://www.figma.com/api/mcp/asset/12af8ff0-0870-4df1-9527-c4559cff28db" alt="Galéria 1" />
-        <img src="https://www.figma.com/api/mcp/asset/b50804e4-77aa-4ba2-a4e1-d531fb0b7142" alt="Galéria 2" />
-        <img src="https://www.figma.com/api/mcp/asset/d45995a9-006e-4c0d-a6b2-e63ecbfa6f48" alt="Galéria 3" />
-        <img src="https://www.figma.com/api/mcp/asset/a1a3c28f-29d1-446b-8fe5-fb095dcf655e" alt="Galéria 4" />
+        <img src="/images/barna.png"      alt="Galéria 1" loading="lazy" />
+        <img src="/images/sotetbarna.png" alt="Galéria 2" loading="lazy" />
+        <img src="/images/fekete.png"     alt="Galéria 3" loading="lazy" />
+        <img src="/images/reszlet.png"    alt="Galéria 4" loading="lazy" />
       </div>
-
-      <!-- Fade + Tovább: sits over the bottom of the grid -->
       <div class="gallery-fade" id="galleryFade">
         <button class="btn-gallery" onclick="expandGallery()">Tovább</button>
       </div>
     </div>
-
-    <!-- Kevesebb btn -->
     <button class="btn-collapse" id="btnCollapse" onclick="collapseGallery()">Kevesebb</button>
   </section>
 
-  <!-- FOOTER CTA -->
+  <!-- FOOTER -->
   <footer id="footer-cta">
     <div class="footer-header reveal">
       <h2 class="footer-title">Időtálló design, megkérdőjelezhetetlen minőség</h2>
@@ -731,6 +185,7 @@
       <div class="cart-items" id="cartItems"></div>
 
       <div class="cart-summary">
+        <div class="cart-summary-body">
         <div class="summary-title">Összesítés</div>
         <div class="summary-divider"></div>
 
@@ -747,7 +202,7 @@
               </span>
               <span class="ship-opt-body">
                 <span class="ship-opt-name">GLS Csomagpont</span>
-                <span class="ship-opt-price">Ingyenes</span>
+                <span class="ship-opt-price">1.400 Ft</span>
               </span>
               <span class="ship-opt-radio"></span>
             </button>
@@ -760,7 +215,7 @@
               </span>
               <span class="ship-opt-body">
                 <span class="ship-opt-name">GLS Házhozszállítás</span>
-                <span class="ship-opt-price">990 Ft</span>
+                <span class="ship-opt-price">2.000 Ft</span>
               </span>
               <span class="ship-opt-radio"></span>
             </button>
@@ -768,12 +223,10 @@
 
           <!-- Csomagpont választó -->
           <div class="pickup-panel" id="pickupPanel" style="display:none;">
-
-            <!-- Keresőnézet -->
             <div id="pickupSearchView">
               <div style="display:flex;gap:6px;margin-bottom:8px;">
                 <input class="pickup-search" id="pickupSearch" type="text"
-                  placeholder="Irányítószám vagy városnév…"
+                  placeholder="Irányítószám, városnév vagy utcanév…"
                   oninput="onPickupInput(this.value)"
                   onkeydown="if(event.key==='Enter')doPickupSearch()"
                   style="margin-bottom:0;flex:1;" />
@@ -781,15 +234,12 @@
               </div>
               <div class="pickup-list" id="pickupList"></div>
             </div>
-
-            <!-- Kiválasztott csomagpont (bezárt nézet) -->
             <div id="pickupSelectedView" style="display:none;">
               <div class="pickup-item selected" style="cursor:pointer;" onclick="showPickupSearch()">
                 <div id="pickupSelectedContent"></div>
                 <div style="font-size:11px;color:var(--mid);margin-top:5px;font-weight:500;">Módosítás ›</div>
               </div>
             </div>
-
           </div>
 
           <!-- Megrendelő adatai -->
@@ -813,8 +263,10 @@
           <div class="summary-row"><span>Szállítás</span><span id="sumShipping">–</span></div>
           <div class="summary-row total"><span>Végösszeg</span><span id="sumTotal">–</span></div>
         </div>
-        <div class="summary-divider"></div>
-        <button class="btn-pay" id="btnPay" onclick="startPayment()">Fizetés</button>
+        </div><!-- /cart-summary-body -->
+        <div class="cart-summary-footer">
+          <button class="btn-pay" id="btnPay" onclick="startPayment()">Fizetés</button>
+        </div>
       </div>
     </div>
   </div>
@@ -829,7 +281,6 @@
   </div>
 </div>
 
-
 <!-- ═══════════════════════════════════
      ADD ITEM DIALOG
 ═══════════════════════════════════ -->
@@ -837,56 +288,52 @@
   <div class="dialog-box">
     <button class="dialog-close" onclick="closeDialog()" aria-label="Bezárás">✕</button>
 
-    <!-- Images -->
     <div class="dialog-images">
       <img id="dlgMainImg"
-        src="https://www.figma.com/api/mcp/asset/12af8ff0-0870-4df1-9527-c4559cff28db"
+        src="/images/barna.png"
         alt="FOLD pénztárca" class="dialog-main-img" />
       <div class="dialog-thumbs">
         <img class="dialog-thumb active"
-          src="https://www.figma.com/api/mcp/asset/12af8ff0-0870-4df1-9527-c4559cff28db"
+          src="/images/barna.png"
           alt="Barna" onmouseenter="dlgSetMain(this)" />
         <img class="dialog-thumb"
-          src="https://www.figma.com/api/mcp/asset/b50804e4-77aa-4ba2-a4e1-d531fb0b7142"
+          src="/images/sotetbarna.png"
           alt="Sötétbarna" onmouseenter="dlgSetMain(this)" />
         <img class="dialog-thumb"
-          src="https://www.figma.com/api/mcp/asset/d45995a9-006e-4c0d-a6b2-e63ecbfa6f48"
+          src="/images/fekete.png"
           alt="Fekete" onmouseenter="dlgSetMain(this)" />
         <img class="dialog-thumb"
-          src="https://www.figma.com/api/mcp/asset/a1a3c28f-29d1-446b-8fe5-fb095dcf655e"
+          src="/images/reszlet.png"
           alt="Részlet" onmouseenter="dlgSetMain(this)" />
       </div>
     </div>
 
-    <!-- Info -->
     <div class="dialog-info">
       <div class="dialog-name">FOLD Pénztárca</div>
       <div class="dialog-desc">Teljes kiőrlésű bőr · Kézzel varrt</div>
       <div class="dialog-price">4.500 Ft</div>
 
-      <!-- Color -->
       <div class="dlg-section">
         <div class="dlg-label">Szín</div>
         <div class="color-options">
           <button class="color-chip" data-color="Barna"
-            data-img="https://www.figma.com/api/mcp/asset/12af8ff0-0870-4df1-9527-c4559cff28db"
+            data-img="/images/barna.png"
             onclick="dlgSelectColor(this)">
             <span class="color-swatch" style="background:#8B6347;"></span>Barna
           </button>
           <button class="color-chip" data-color="Sötétbarna"
-            data-img="https://www.figma.com/api/mcp/asset/b50804e4-77aa-4ba2-a4e1-d531fb0b7142"
+            data-img="/images/sotetbarna.png"
             onclick="dlgSelectColor(this)">
             <span class="color-swatch" style="background:#3b2618;"></span>Sötétbarna
           </button>
           <button class="color-chip" data-color="Fekete"
-            data-img="https://www.figma.com/api/mcp/asset/d45995a9-006e-4c0d-a6b2-e63ecbfa6f48"
+            data-img="/images/fekete.png"
             onclick="dlgSelectColor(this)">
             <span class="color-swatch" style="background:#1c1c1c;"></span>Fekete
           </button>
         </div>
       </div>
 
-      <!-- Qty -->
       <div class="dlg-section">
         <div class="dlg-label">Darabszám</div>
         <div class="dlg-qty-row">
@@ -903,556 +350,8 @@
   </div>
 </div>
 
+<div class="toast-container" id="toastContainer"></div>
 
-<script>
-  /* ── PAGE SWITCHER ── */
-  function showPage(name) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(name + '-page').classList.add('active');
-    window.scrollTo(0, 0);
-    if (name === 'cart') renderCart();
-    if (name === 'landing' && !document.getElementById('galleryFade').classList.contains('hidden')) {
-      requestAnimationFrame(() => requestAnimationFrame(initGallery));
-    }
-  }
-
-  /* ── NAVBAR SCROLL ── */
-  const navbar = document.getElementById('navbar');
-  window.addEventListener('scroll', () => {
-    navbar.classList.toggle('scrolled', window.scrollY > 10);
-  });
-
-  /* ── MOBILE MENU ── */
-  function toggleMenu() {
-    document.getElementById('hamburger').classList.toggle('open');
-    document.getElementById('mobileMenu').classList.toggle('open');
-  }
-  function closeMenu() {
-    document.getElementById('hamburger').classList.remove('open');
-    document.getElementById('mobileMenu').classList.remove('open');
-  }
-
-  /* ── GALLERY ── */
-  // On load: clip gallery to show only top ~75% (hides bottom of row2 behind fade)
-  function initGallery() {
-    const wrap = document.getElementById('galleryWrap');
-    const grid = document.getElementById('galleryGrid');
-    if (!grid) return;
-    const fullH = grid.scrollHeight || grid.offsetHeight;
-    if (!fullH) return;
-    wrap.style.transition = 'none';
-    wrap.style.maxHeight = Math.round(fullH * 0.78) + 'px';
-    wrap.style.overflow = 'hidden';
-    requestAnimationFrame(() => {
-      wrap.style.transition = 'max-height .7s cubic-bezier(.4,0,.2,1)';
-    });
-  }
-  function expandGallery() {
-    const wrap = document.getElementById('galleryWrap');
-    const grid = document.getElementById('galleryGrid');
-    wrap.style.maxHeight = grid.scrollHeight + 'px';
-    wrap.style.overflow = 'visible';
-    document.getElementById('galleryFade').classList.add('hidden');
-    document.getElementById('btnCollapse').classList.add('visible');
-  }
-  function collapseGallery() {
-    const wrap = document.getElementById('galleryWrap');
-    const grid = document.getElementById('galleryGrid');
-    const fullH = grid.scrollHeight || grid.offsetHeight;
-    wrap.style.maxHeight = Math.round(fullH * 0.78) + 'px';
-    wrap.style.overflow = 'hidden';
-    document.getElementById('galleryFade').classList.remove('hidden');
-    document.getElementById('btnCollapse').classList.remove('visible');
-  }
-  // Init after images load
-  window.addEventListener('load', initGallery);
-
-  /* ── SCROLL REVEAL ── */
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
-  }, { threshold: 0.1 });
-  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-
-  /* ── CART STATE ── */
-  const SHIPPING = 990;
-  let cartItems = [];
-
-  /* ── PICKUP POINTS (helyi fallback GLS csomagpontok) ── */
-  const PICKUP_POINTS = [
-    { id:1,  name:'GLS Csomagpont – Tesco',       city:'Budapest',       zip:'1148', address:'Örs vezér tere 25, 1148 Budapest',       hours:'H–V: 7:00–22:00, Szo–V: 8:00–20:00' },
-    { id:2,  name:'GLS Csomagpont – SPAR',         city:'Budapest',       zip:'1115', address:'Etele út 1-3, 1115 Budapest',            hours:'H–P: 7:00–20:00, Szo: 7:00–18:00' },
-    { id:3,  name:'GLS Csomagpont – VII. ker.',    city:'Budapest',       zip:'1074', address:'Rákóczi út 70-72, 1074 Budapest',        hours:'H–P: 8:00–20:00' },
-    { id:4,  name:'GLS Csomagpont – V. ker.',      city:'Budapest',       zip:'1051', address:'Váci utca 40, 1051 Budapest',            hours:'H–P: 8:00–20:00' },
-    { id:5,  name:'GLS Csomagpont – XI. ker.',     city:'Budapest',       zip:'1117', address:'Október huszonharmadika u. 18, 1117 Budapest', hours:'H–P: 8:00–20:00' },
-    { id:6,  name:'GLS Csomagpont – XIII. ker.',   city:'Budapest',       zip:'1131', address:'Lehel út 9, 1131 Budapest',              hours:'H–P: 8:00–20:00' },
-    { id:7,  name:'GLS Csomagpont – Centrum',      city:'Debrecen',       zip:'4024', address:'Piac utca 11, 4024 Debrecen',            hours:'H–P: 8:00–18:00, Szo: 9:00–13:00' },
-    { id:8,  name:'GLS Csomagpont – Fórum',        city:'Debrecen',       zip:'4031', address:'Kiskereskedelmi sor 1, 4031 Debrecen',   hours:'H–P: 9:00–20:00' },
-    { id:9,  name:'GLS Csomagpont – Plaza',        city:'Miskolc',        zip:'3530', address:'Majláth utca 2, 3530 Miskolc',           hours:'H–V: 9:00–20:00' },
-    { id:10, name:'GLS Csomagpont – Árkád',        city:'Pécs',           zip:'7621', address:'Anna utca 1-5, 7621 Pécs',              hours:'H–V: 9:00–20:00' },
-    { id:11, name:'GLS Csomagpont – Interspar',    city:'Győr',           zip:'9027', address:'Budai út 1, 9027 Győr',                 hours:'H–P: 7:00–21:00, Szo: 7:00–20:00' },
-    { id:12, name:'GLS Csomagpont – Kossuth tér',  city:'Kecskemét',      zip:'6000', address:'Kossuth tér 1, 6000 Kecskemét',         hours:'H–P: 8:00–18:00' },
-    { id:13, name:'GLS Csomagpont – Centrum',      city:'Székesfehérvár', zip:'8000', address:'Palotai út 3, 8000 Székesfehérvár',     hours:'H–P: 8:00–18:00' },
-    { id:14, name:'GLS Csomagpont – Kossuth tér',  city:'Nyíregyháza',    zip:'4400', address:'Kossuth tér 5, 4400 Nyíregyháza',       hours:'H–P: 8:00–18:00' },
-    { id:15, name:'GLS Csomagpont – Interspar',    city:'Eger',           zip:'3300', address:'Mátyás király út 2, 3300 Eger',          hours:'H–V: 8:00–20:00' },
-    { id:16, name:'GLS Csomagpont – Centrum',      city:'Szombathely',    zip:'9700', address:'Fő tér 1, 9700 Szombathely',            hours:'H–P: 8:00–18:00' },
-    { id:17, name:'GLS Csomagpont – Árkád',        city:'Kaposvár',       zip:'7400', address:'Bajcsy-Zsilinszky u. 21, 7400 Kaposvár', hours:'H–P: 8:00–18:00' },
-    { id:18, name:'GLS Csomagpont – Centrum',      city:'Szolnok',        zip:'5000', address:'Baross Gábor út 5, 5000 Szolnok',        hours:'H–P: 8:00–18:00' },
-    { id:19, name:'GLS Csomagpont – SPAR',         city:'Zalaegerszeg',   zip:'8900', address:'Kossuth Lajos utca 19, 8900 Zalaegerszeg', hours:'H–P: 7:00–20:00' },
-    { id:20, name:'GLS Csomagpont – Tesco',        city:'Pécs',           zip:'7633', address:'Megyeri út 76, 7633 Pécs',               hours:'H–V: 6:00–22:00' },
-    { id:21, name:'GLS Csomagpont – Centrum',      city:'Veszprém',       zip:'8200', address:'Óváros tér 2, 8200 Veszprém',            hours:'H–P: 8:00–18:00' },
-    { id:22, name:'GLS Csomagpont – Plaza',        city:'Sopron',         zip:'9400', address:'Lackner Kristóf u. 38, 9400 Sopron',     hours:'H–P: 8:00–18:00' },
-    { id:23, name:'GLS Csomagpont – Centrum',      city:'Tatabánya',      zip:'2800', address:'Fő tér 1, 2800 Tatabánya',              hours:'H–P: 8:00–18:00' },
-    { id:24, name:'GLS Csomagpont – Tesco',        city:'Budaörs',        zip:'2040', address:'Kinizsi utca 2, 2040 Budaörs',           hours:'H–V: 6:00–22:00' },
-    { id:25, name:'GLS Csomagpont – Centrum',      city:'Érd',            zip:'2030', address:'Budai út 13, 2030 Érd',                 hours:'H–P: 8:00–18:00' },
-  ];
-
-  let shippingMethod = null;
-  let selectedPickup = null;
-  let pickupSearchTimer = null;
-  let lastPickupResults = [...PICKUP_POINTS];
-
-  function selectShipping(method) {
-    shippingMethod = method;
-    if (method !== 'pickup') selectedPickup = null;
-    document.querySelectorAll('.ship-opt').forEach(el =>
-      el.classList.toggle('selected', el.dataset.m === method)
-    );
-    document.getElementById('pickupPanel').style.display   = method === 'pickup' ? '' : 'none';
-    document.getElementById('customerPanel').style.display = '';
-    document.getElementById('addressPanel').style.display  = method === 'home' ? '' : 'none';
-    if (method === 'pickup') renderPickupList(PICKUP_POINTS.slice(0, 8));
-    renderShippingDisplay();
-  }
-
-  function onPickupInput(val) {
-    clearTimeout(pickupSearchTimer);
-    const q = val.trim();
-    if (/^\d{4}$/.test(q)) {
-      pickupSearchTimer = setTimeout(() => doPickupSearch(), 400);
-    } else {
-      renderPickupList(filterLocal(q));
-    }
-  }
-
-  async function doPickupSearch() {
-    const q = document.getElementById('pickupSearch').value.trim();
-    if (!q) { renderPickupList(PICKUP_POINTS.slice(0, 8)); return; }
-
-    const isZip = /^\d{3,4}$/.test(q);
-    const list  = document.getElementById('pickupList');
-    list.innerHTML = '<div style="padding:10px 12px;font-size:12px;color:#bbb;">Keresés…</div>';
-
-    try {
-      const param = isZip ? `zip=${encodeURIComponent(q)}` : `city=${encodeURIComponent(q)}`;
-      const r     = await fetch(`/api/gls-parcelshops?${param}`);
-      const shops = await r.json();
-      if (Array.isArray(shops) && shops.length > 0) {
-        lastPickupResults = shops;
-        renderPickupList(shops);
-        return;
-      }
-    } catch {}
-
-    renderPickupList(filterLocal(q));
-  }
-
-  function filterLocal(q) {
-    if (!q) return PICKUP_POINTS.slice(0, 8);
-    const s = q.toLowerCase();
-    return PICKUP_POINTS.filter(p =>
-      p.zip?.startsWith(s) ||
-      p.city.toLowerCase().includes(s) ||
-      p.name.toLowerCase().includes(s) ||
-      p.address.toLowerCase().includes(s)
-    );
-  }
-
-  function renderPickupList(points) {
-    lastPickupResults = points;
-    document.getElementById('pickupList').innerHTML = points.length
-      ? points.map((p, i) => `
-          <div class="pickup-item${selectedPickup === p.id ? ' selected' : ''}" onclick="selectPickupByIndex(${i})">
-            <div class="pickup-item-name">${p.name}</div>
-            <div class="pickup-item-addr">${p.address}</div>
-            ${p.hours ? `<div class="pickup-item-hours">${p.hours}</div>` : ''}
-          </div>`).join('')
-      : '<div style="padding:10px 12px;font-size:12px;color:#bbb;">Nincs találat. Próbálj más irányítószámot!</div>';
-  }
-
-  function selectPickupByIndex(i) {
-    const p = lastPickupResults[i];
-    if (!p) return;
-    selectedPickup = p.id;
-
-    document.getElementById('pickupSelectedContent').innerHTML = `
-      <div class="pickup-item-name">${p.name}</div>
-      <div class="pickup-item-addr">${p.address}</div>
-      ${p.hours ? `<div class="pickup-item-hours">${p.hours}</div>` : ''}`;
-
-    document.getElementById('pickupSearchView').style.display  = 'none';
-    document.getElementById('pickupSelectedView').style.display = '';
-
-    renderShippingDisplay();
-  }
-
-  function showPickupSearch() {
-    document.getElementById('pickupSelectedView').style.display = 'none';
-    document.getElementById('pickupSearchView').style.display   = '';
-    document.getElementById('pickupSearch').focus();
-    renderPickupList(lastPickupResults.length ? lastPickupResults : PICKUP_POINTS.slice(0, 8));
-  }
-
-  function renderShippingDisplay() {
-    const subtotal = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
-    const hasItems = cartItems.length > 0;
-    if (!hasItems) {
-      document.getElementById('sumShipping').textContent = '–';
-      document.getElementById('sumTotal').textContent    = '–';
-      return;
-    }
-    if (shippingMethod === 'pickup') {
-      document.getElementById('sumShipping').textContent = 'Ingyenes';
-      document.getElementById('sumTotal').textContent    = fmt(subtotal);
-    } else if (shippingMethod === 'home') {
-      document.getElementById('sumShipping').textContent = fmt(SHIPPING);
-      document.getElementById('sumTotal').textContent    = fmt(subtotal + SHIPPING);
-    } else {
-      document.getElementById('sumShipping').textContent = 'Válassz módot';
-      document.getElementById('sumTotal').textContent    = fmt(subtotal);
-    }
-  }
-
-  /* ── DIALOG STATE ── */
-  const DLG_COLORS = {
-    'Barna':      { sub: 'Teljes kiőrlésű bőr · Barna',      img: 'https://www.figma.com/api/mcp/asset/12af8ff0-0870-4df1-9527-c4559cff28db' },
-    'Sötétbarna': { sub: 'Teljes kiőrlésű bőr · Sötétbarna', img: 'https://www.figma.com/api/mcp/asset/b50804e4-77aa-4ba2-a4e1-d531fb0b7142' },
-    'Fekete':     { sub: 'Teljes kiőrlésű bőr · Fekete',      img: 'https://www.figma.com/api/mcp/asset/d45995a9-006e-4c0d-a6b2-e63ecbfa6f48' },
-  };
-  let dlgColor = null;
-  let dlgQty   = 1;
-
-  function openDialog() {
-    dlgColor = null;
-    dlgQty   = 1;
-    document.getElementById('dlgQtyVal').textContent = dlgQty;
-    document.querySelectorAll('.color-chip').forEach(b => b.classList.remove('selected'));
-    document.getElementById('btnAddItem').disabled = true;
-    document.getElementById('btnAddItem').textContent = 'Hozzáadás a kosárhoz';
-    // reset main image + active thumb to first
-    const thumbs = document.querySelectorAll('.dialog-thumb');
-    thumbs.forEach((t, i) => t.classList.toggle('active', i === 0));
-    document.getElementById('dlgMainImg').src = thumbs[0].src;
-    document.getElementById('addDialog').classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeDialog() {
-    document.getElementById('addDialog').classList.remove('open');
-    document.body.style.overflow = '';
-  }
-
-  function dlgOverlayClick(e) {
-    if (e.target === document.getElementById('addDialog')) closeDialog();
-  }
-
-  function dlgSetMain(el) {
-    document.getElementById('dlgMainImg').src = el.src;
-    document.querySelectorAll('.dialog-thumb').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-  }
-
-  function dlgSelectColor(btn) {
-    document.querySelectorAll('.color-chip').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    dlgColor = btn.dataset.color;
-    // switch main image to this color's image
-    document.getElementById('dlgMainImg').src = btn.dataset.img;
-    document.querySelectorAll('.dialog-thumb').forEach(t => {
-      t.classList.toggle('active', t.src === btn.dataset.img);
-    });
-    dlgUpdateBtn();
-  }
-
-  function dlgQtyChange(delta) {
-    dlgQty = Math.max(1, dlgQty + delta);
-    document.getElementById('dlgQtyVal').textContent = dlgQty;
-    dlgUpdateBtn();
-  }
-
-  function dlgUpdateBtn() {
-    document.getElementById('btnAddItem').disabled = !dlgColor || dlgQty < 1;
-  }
-
-  function dlgAddToCart() {
-    if (!dlgColor) return;
-    const c = DLG_COLORS[dlgColor];
-    const existing = cartItems.find(i => i.name === 'FOLD ' + dlgColor);
-    if (existing) {
-      existing.qty += dlgQty;
-    } else {
-      cartItems.push({ id: Date.now(), name: 'FOLD ' + dlgColor, sub: c.sub, price: 4500, qty: dlgQty, img: c.img });
-    }
-    renderCart();
-    const btn = document.getElementById('btnAddItem');
-    btn.textContent = 'Hozzáadva! ✓';
-    setTimeout(closeDialog, 700);
-  }
-
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDialog(); });
-
-  const fmt = n => n.toLocaleString('hu-HU') + ' Ft';
-
-  const trashIcon = `<svg viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-
-  function renderCart() {
-    const container = document.getElementById('cartItems');
-    const count = cartItems.length;
-
-    // heading
-    const totalQty = cartItems.reduce((s, i) => s + i.qty, 0);
-    document.getElementById('cartSubheading').textContent =
-      totalQty === 0 ? 'A kosarad üres.' :
-      totalQty === 1 ? '1 termék van a kosaradban' :
-      totalQty + ' termék van a kosaradban';
-
-    // items
-    container.innerHTML = cartItems.map(item => `
-      <div class="cart-item" data-id="${item.id}">
-        <img class="cart-item-img" src="${item.img}" alt="${item.name}" />
-        <div class="cart-item-info">
-          <div class="cart-item-name">${item.name}</div>
-          <div class="cart-item-sub">${item.sub}</div>
-        </div>
-        <div class="cart-item-qty">
-          <button class="qty-btn" onclick="changeQty(${item.id}, -1)">−</button>
-          <span>${item.qty}</span>
-          <button class="qty-btn" onclick="changeQty(${item.id}, +1)">+</button>
-        </div>
-        <div class="cart-item-price">${fmt(item.price * item.qty)}</div>
-        <button class="trash-btn" onclick="removeItem(${item.id})">${trashIcon}</button>
-      </div>
-    `).join('');
-
-    // empty state
-    if (count === 0) {
-      container.innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;padding:48px 0;text-align:center;">
-          <div style="font-family:var(--serif);font-size:24px;color:var(--muted);margin-bottom:8px;">A kosarad üres.</div>
-          <div style="font-size:14px;color:#aaa;margin-bottom:24px;">Válassz egy pénztárcát és add hozzá a kosárhoz.</div>
-          <button class="btn-open-dialog" onclick="openDialog()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="white" stroke-width="2.2" stroke-linecap="round"/></svg>
-            Termék hozzáadása
-          </button>
-        </div>`;
-    } else {
-      container.innerHTML += `
-        <button class="btn-open-dialog" style="align-self:flex-start;margin-top:4px;" onclick="openDialog()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="white" stroke-width="2.2" stroke-linecap="round"/></svg>
-          Termék hozzáadása
-        </button>`;
-    }
-
-    // summary
-    const subtotal = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
-    document.getElementById('sumSubtotal').textContent = count > 0 ? fmt(subtotal) : '–';
-    renderShippingDisplay();
-
-    // update badge
-    const badge = document.getElementById('cartBadge');
-    badge.textContent = totalQty;
-    badge.classList.toggle('zero', totalQty === 0);
-  }
-
-  function changeQty(id, delta) {
-    const item = cartItems.find(i => i.id === id);
-    if (!item) return;
-    item.qty += delta;
-    if (item.qty <= 0) removeItem(id);
-    else renderCart();
-  }
-
-  function removeItem(id) {
-    cartItems = cartItems.filter(i => i.id !== id);
-    renderCart();
-  }
-
-  // ══════════════════════════════════════════════
-  //  STRIPE FIZETÉS INDÍTÁSA
-  // ══════════════════════════════════════════════
-  async function startPayment() {
-    if (cartItems.length === 0) { alert('A kosarad üres!'); return; }
-
-    const existing = document.getElementById('payErrorBox');
-    if (existing) existing.remove();
-
-    if (!shippingMethod) { showPaymentError('Kérjük, válassz szállítási módot!'); return; }
-    if (shippingMethod === 'pickup' && !selectedPickup) { showPaymentError('Kérjük, válassz egy csomagpontot!'); return; }
-
-    const name  = document.getElementById('custName').value.trim();
-    const phone = document.getElementById('custPhone').value.trim();
-    if (!name || !phone) { showPaymentError('Kérjük, add meg a neved és telefonszámodat!'); return; }
-
-    if (shippingMethod === 'home') {
-      const zip    = document.getElementById('custZip').value.trim();
-      const city   = document.getElementById('custCity').value.trim();
-      const street = document.getElementById('custStreet').value.trim();
-      if (!zip || !city || !street) { showPaymentError('Kérjük, add meg a szállítási címet!'); return; }
-    }
-
-    const btn = document.getElementById('btnPay');
-    btn.disabled = true;
-    btn.textContent = 'Feldolgozás…';
-
-    const body = { items: cartItems, shippingMethod, customerName: name, customerPhone: phone };
-    if (shippingMethod === 'pickup') {
-      const pp = lastPickupResults.find(p => p.id === selectedPickup)
-              || PICKUP_POINTS.find(p => p.id === selectedPickup);
-      body.pickupPointId      = selectedPickup;
-      body.pickupPointName    = pp?.name    || '';
-      body.pickupPointAddress = pp?.address || '';
-    } else {
-      body.shippingAddress = {
-        zip:    document.getElementById('custZip').value.trim(),
-        city:   document.getElementById('custCity').value.trim(),
-        street: document.getElementById('custStreet').value.trim(),
-      };
-    }
-
-    try {
-      const res  = await fetch('/api/create-checkout', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(body),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.url) throw new Error(data.error || 'Szerver hiba.');
-      window.location.href = data.url;
-    } catch (err) {
-      btn.disabled = false;
-      btn.textContent = 'Fizetés';
-      showPaymentError(err.message);
-    }
-  }
-
-  function showPaymentError(msg) {
-    const existing = document.getElementById('payErrorBox');
-    if (existing) existing.remove();
-    const box = document.createElement('div');
-    box.id = 'payErrorBox';
-    box.style.cssText = 'background:#fdecea;color:#c62828;border-radius:10px;padding:14px 18px;font-size:14px;margin-top:12px;';
-    box.innerHTML = '<strong>Hiba:</strong> ' + msg + '<br><small>Ellenőrizd a .env fájl STRIPE_SECRET_KEY értékét.</small>';
-    document.querySelector('.cart-summary').appendChild(box);
-  }
-
-  // ══════════════════════════════════════════════
-  //  EREDMÉNY OLDAL – Stripe visszairányítás után
-  // ══════════════════════════════════════════════
-  async function handlePaymentResult() {
-    const params     = new URLSearchParams(window.location.search);
-    const page       = params.get('page');
-    const status     = params.get('status');    // 'success' | 'cancel'
-    const session_id = params.get('session_id');
-
-    if (page !== 'result') return;
-
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('result-page').classList.add('active');
-    window.history.replaceState({}, '', '/');
-
-    const card = document.getElementById('resultCard');
-    card.innerHTML = '<div class="pay-spinner" style="margin:40px 0;"></div>';
-
-    if (status === 'cancel') {
-      renderResultCard(card, 'cancel', null);
-      return;
-    }
-
-    // Sikeres esetben lekérdezzük a session adatait
-    try {
-      const res  = await fetch(`/api/checkout-result?session_id=${session_id}`);
-      const data = await res.json();
-      renderResultCard(card, data.status === 'paid' ? 'success' : 'failed', data);
-    } catch {
-      renderResultCard(card, 'error', null);
-    }
-  }
-
-  function renderResultCard(card, status, data) {
-    const fmt = n => n ? Math.round(n / 100).toLocaleString('hu-HU') + ' Ft' : '–';
-
-    const cfg = {
-      success: {
-        iconBg: 'success',
-        icon: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#43a047" stroke-width="2"/><path d="M7 12l3.5 3.5L17 8" stroke="#43a047" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-        title: 'Sikeres fizetés!',
-        sub:   'Köszönjük a rendelésedet! A visszaigazolást hamarosan elküldjük.',
-        onShow: () => {
-          // Kosár ürítése sikeres fizetés után
-          cartItems = [];
-          renderCart();
-        },
-      },
-      failed: {
-        iconBg: 'failed',
-        icon: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#e53935" stroke-width="2"/><path d="M8 8l8 8M16 8l-8 8" stroke="#e53935" stroke-width="2.2" stroke-linecap="round"/></svg>',
-        title: 'Sikertelen fizetés',
-        sub:   'A kártya terhelése nem sikerült. Próbáld újra.',
-      },
-      cancel: {
-        iconBg: 'failed',
-        icon: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#e53935" stroke-width="2"/><path d="M8 8l8 8M16 8l-8 8" stroke="#e53935" stroke-width="2.2" stroke-linecap="round"/></svg>',
-        title: 'Fizetés megszakítva',
-        sub:   'Visszatértél a fizetés nélkül. A kosarad megmaradt.',
-      },
-      error: {
-        iconBg: 'pending',
-        icon: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#f9a825" stroke-width="2"/><path d="M12 7v5l3 3" stroke="#f9a825" stroke-width="2.2" stroke-linecap="round"/></svg>',
-        title: 'Ismeretlen állapot',
-        sub:   'Nem sikerült lekérni a fizetés eredményét.',
-      },
-    }[status] || {};
-
-    let detailHtml = '';
-    if (status === 'success' && data) {
-      const isPickup = data.shipping_method === 'pickup';
-      const hasAddr  = data.ship_zip || data.ship_city || data.ship_street;
-      const shipLine = isPickup
-        ? (data.pickup_name ? `${data.pickup_name}${data.pickup_address ? '<br><span style="font-size:12px;color:#999;">' + data.pickup_address + '</span>' : ''}` : 'GLS Csomagpont')
-        : (hasAddr ? `${data.ship_zip} ${data.ship_city}, ${data.ship_street}` : 'GLS Házhozszállítás');
-
-      detailHtml = `
-        <div class="result-detail">
-          ${data.customer_name  ? `<div class="result-row"><span>Név</span><span>${data.customer_name}</span></div>` : ''}
-          ${data.customer_email ? `<div class="result-row"><span>E-mail</span><span>${data.customer_email}</span></div>` : ''}
-          ${data.customer_phone ? `<div class="result-row"><span>Telefon</span><span>${data.customer_phone}</span></div>` : ''}
-          <div class="result-row" style="align-items:flex-start;">
-            <span>${isPickup ? 'Csomagpont' : 'Szállítási cím'}</span>
-            <span style="text-align:right;max-width:200px;line-height:1.4;">${shipLine}</span>
-          </div>
-          <div class="result-row total">
-            <span>Fizetett összeg</span>
-            <span>${fmt(data.amount_total)}</span>
-          </div>
-        </div>`;
-    }
-
-    card.innerHTML = `
-      <div class="result-icon ${cfg.iconBg}">${cfg.icon}</div>
-      <h2 class="result-title">${cfg.title}</h2>
-      <p class="result-sub">${cfg.sub}</p>
-      ${detailHtml}
-      <button class="btn-back-home" onclick="showPage('landing')">
-        <svg width="18" height="12" viewBox="0 0 18 12" fill="none">
-          <path d="M1 6h16M1 6l5-5M1 6l5 5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Vissza a főoldalra
-      </button>`;
-
-    if (cfg.onShow) cfg.onShow();
-  }
-
-  window.addEventListener('DOMContentLoaded', handlePaymentResult);
-</script>
-
+<script src="/app.js"></script>
 </body>
 </html>

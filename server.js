@@ -2,16 +2,16 @@ require('dotenv').config();
 const express    = require('express');
 const path       = require('path');
 const cors       = require('cors');
-const https      = require('https');
 const crypto     = require('crypto');
 const Stripe     = require('stripe');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 const app    = express();
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const PORT   = process.env.PORT || 3000;
 const BASE_URL     = process.env.BASE_URL || `http://localhost:${PORT}`;
-const SHIPPING_FEE = parseInt(process.env.SHIPPING_FEE || '990');
+const SHIPPING_FEE   = parseInt(process.env.SHIPPING_FEE   || '2000');
+const GLS_PICKUP_FEE = parseInt(process.env.GLS_PICKUP_FEE || '1400');
 
 // ── GLS API ───────────────────────────────────────────────────────────────────
 const GLS_BASE   = process.env.GLS_API_BASE || 'https://api.test.mygls.hu';
@@ -23,65 +23,19 @@ function glsPasswordHash() {
   return Array.from(crypto.createHash('sha512').update(GLS_PASS, 'utf8').digest());
 }
 
-function glsPost(operation, body) {
-  const payload = JSON.stringify(body);
-  const url     = new URL(`${GLS_BASE}/ParcelService.svc/json/${operation}`);
-
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: url.hostname,
-      path:     url.pathname,
-      method:   'POST',
-      headers:  {
-        'Content-Type':   'application/json',
-        'Accept':         'application/json',
-        'Content-Length': Buffer.byteLength(payload),
-      },
-    };
-    const req = https.request(options, res => {
-      let data = '';
-      res.on('data', c => data += c);
-      res.on('end', () => {
-        try   { resolve(JSON.parse(data)); }
-        catch { reject(new Error('GLS JSON parse error: ' + data.slice(0, 200))); }
-      });
-    });
-    req.setTimeout(15000, () => { req.destroy(); reject(new Error('GLS timeout')); });
-    req.on('error', reject);
-    req.write(payload);
-    req.end();
+async function glsPost(operation, body) {
+  const url = `${GLS_BASE}/ParcelService.svc/json/${operation}`;
+  const res = await fetch(url, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body:    JSON.stringify(body),
+    signal:  AbortSignal.timeout(15000),
   });
+  const text = await res.text();
+  try   { return JSON.parse(text); }
+  catch { throw new Error('GLS JSON parse error: ' + text.slice(0, 200)); }
 }
 
-function glsMasterPost(operation, body) {
-  const payload = JSON.stringify(body);
-  const url     = new URL(`${GLS_BASE}/MasterDataService.svc/json/${operation}`);
-
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: url.hostname,
-      path:     url.pathname,
-      method:   'POST',
-      headers:  {
-        'Content-Type':   'application/json',
-        'Accept':         'application/json',
-        'Content-Length': Buffer.byteLength(payload),
-      },
-    };
-    const req = https.request(options, res => {
-      let data = '';
-      res.on('data', c => data += c);
-      res.on('end', () => {
-        try   { resolve(JSON.parse(data)); }
-        catch { reject(new Error('GLS JSON parse error')); }
-      });
-    });
-    req.setTimeout(15000, () => { req.destroy(); reject(new Error('GLS timeout')); });
-    req.on('error', reject);
-    req.write(payload);
-    req.end();
-  });
-}
 
 // Kiszállítás létrehozása a GLS API-n keresztül
 async function glsCreateShipment(meta, customerEmail) {
@@ -117,9 +71,27 @@ async function glsCreateShipment(meta, customerEmail) {
         ContactEmail:  customerEmail       || '',
       };
 
+  const pickupIdInt = parseInt(meta.pickup_id);
   const serviceList = isPickup && meta.pickup_id
-    ? [{ Code: 'PSD', PSDParameter: { StringValue: String(meta.pickup_id) } }]
+    ? [{ Code: 'PSD', PSDParameter: isNaN(pickupIdInt)
+        ? { StringValue: String(meta.pickup_id) }
+        : { IntegerValue: pickupIdInt } }]
     : [];
+
+  // Backup cím PSD-hez, ha a csomagpont elérhetetlenné válik
+  const finalDeliveryAddress = isPickup && meta.ship_zip && meta.ship_city
+    ? {
+        Name:          meta.customer_name  || '',
+        City:          meta.ship_city      || '',
+        Street:        (meta.ship_street   || '').replace(/\s+\d.*/, '').trim(),
+        HouseNumber:   (meta.ship_street   || '').match(/\d+.*$/)?.[0] || '1',
+        ZipCode:       meta.ship_zip       || '',
+        CountryIsoCode:'HU',
+        ContactName:   meta.customer_name  || '',
+        ContactPhone:  meta.customer_phone || '',
+        ContactEmail:  customerEmail       || '',
+      }
+    : null;
 
   const parcel = {
     ClientNumber:    GLS_CLIENT,
@@ -139,16 +111,18 @@ async function glsCreateShipment(meta, customerEmail) {
       ContactPhone:  process.env.GLS_SENDER_PHONE  || '',
       ContactEmail:  process.env.GLS_SENDER_EMAIL  || '',
     },
-    ...(serviceList.length ? { ServiceList: serviceList } : {}),
+    ...(serviceList.length         ? { ServiceList: serviceList }                    : {}),
+    ...(finalDeliveryAddress       ? { FinalDeliveryAddress: finalDeliveryAddress }  : {}),
   };
 
   try {
     const response = await glsPost('PrintLabels', {
-      Username:      GLS_USER,
-      Password:      glsPasswordHash(),
-      PrintPosition: 1,
+      Username:        GLS_USER,
+      Password:        glsPasswordHash(),
+      WebshopEngine:   'custom',
+      PrintPosition:   1,
       ShowPrintDialog: false,
-      ParcelList:    [parcel],
+      ParcelList:      [parcel],
     });
 
     const errors = response.PrintLabelsErrorList || [];
@@ -158,7 +132,7 @@ async function glsCreateShipment(meta, customerEmail) {
     }
 
     const info = (response.PrintLabelsInfoList || [])[0];
-    const trackingNumber = info?.ParcelNumber || info?.ParcelId || null;
+    const trackingNumber = info?.ParcelNumber ? String(info.ParcelNumber) : null;
     console.log(`[GLS] Küldemény létrehozva, csomagszám: ${trackingNumber}`);
     return { trackingNumber, labelBase64: response.Labels || null };
   } catch (err) {
@@ -167,72 +141,50 @@ async function glsCreateShipment(meta, customerEmail) {
   }
 }
 
-// Csomagpontok letöltése a GLS API-ból (GetDeliveryPoints)
+// ── GLS CSOMAGPONTOK (nyilvános térkép API) ────────────────────────────────────
+const GLS_PUBLIC_URL = 'https://map.gls-hungary.com/data/deliveryPoints/hu.json';
 let glsShopCache = { data: null, ts: 0 };
-const GLS_CACHE_TTL = 6 * 60 * 60 * 1000; // 6 óra
+const GLS_CACHE_TTL = 6 * 60 * 60 * 1000;
 
-async function glsFetchParcelShops(countryCode = 'HU') {
+async function glsFetchParcelShops() {
   if (glsShopCache.data && Date.now() - glsShopCache.ts < GLS_CACHE_TTL) {
     return glsShopCache.data;
   }
-  if (!GLS_USER || !GLS_PASS) return null;
-
-  try {
-    const resp = await glsMasterPost('GetDeliveryPoints', {
-      Username:      GLS_USER,
-      Password:      glsPasswordHash(),
-      CountryIsoCode: countryCode,
-    });
-
-    if (resp.ErrorCode !== 0 || !resp.Data) return null;
-
-    // Data is base64-encoded binary (GZip-compressed)
-    const buf = Buffer.from(resp.Data, 'base64');
-    const zlib = require('zlib');
-    const decompressed = await new Promise((res, rej) =>
-      zlib.gunzip(buf, (e, d) => e ? rej(e) : res(d))
-    );
-    const shops = JSON.parse(decompressed.toString('utf-8'));
-    const normalized = normalizeGlsShops(Array.isArray(shops) ? shops : shops.DeliveryPoints || shops.data || []);
-    if (normalized.length > 0) {
-      glsShopCache = { data: normalized, ts: Date.now() };
-      console.log(`[GLS] ${normalized.length} csomagpont betöltve.`);
-      return normalized;
-    }
-    return null;
-  } catch (err) {
-    console.warn('[GLS] GetDeliveryPoints hiba:', err.message);
-    return null;
-  }
+  const res = await fetch(GLS_PUBLIC_URL, { signal: AbortSignal.timeout(15000) });
+  if (!res.ok) throw new Error(`GLS HTTP ${res.status}`);
+  const list = await res.json();
+  const arr  = Array.isArray(list) ? list : (list.items || []);
+  const normalized = normalizeGlsShops(arr);
+  glsShopCache = { data: normalized, ts: Date.now() };
+  console.log(`[GLS] ${normalized.length} csomagpont betöltve.`);
+  return normalized;
 }
 
 function normalizeGlsShops(arr) {
+  const days = ['H', 'K', 'Sze', 'Cs', 'P', 'Szo', 'V'];
   return (arr || []).map(s => {
-    const zip    = String(s.ZipCode || s.zipCode || s.PostalCode || '');
-    const city   = s.City || s.city || '';
-    const street = [s.Street || s.street || '', s.HouseNumber || s.houseNumber || ''].filter(Boolean).join(' ');
-    const id     = s.Id || s.id || s.DeliveryPointId || s.ParcelShopId || s.psId;
+    const c = s.contact || {};
+    const hours = (s.hours || [])
+      .sort((a, b) => a[0] - b[0])
+      .map(([d, open, close]) => `${days[d - 1]}: ${open}–${close}`)
+      .join('; ');
     return {
-      id:      id,
-      glsId:   s.DeliveryPointId || s.ParcelShopId || String(id || ''),
-      name:    s.Name || s.name || `GLS Csomagpont – ${city}`,
-      address: [street, zip && city ? `${zip} ${city}` : city].filter(Boolean).join(', '),
-      city,
-      zip,
-      hours:   s.OpeningHours || s.openingHours || '',
+      id:      s.id,
+      name:    s.name || '',
+      address: [c.address, c.postalCode && c.city ? `${c.postalCode} ${c.city}` : c.city].filter(Boolean).join(', '),
+      city:    c.city       || '',
+      zip:     c.postalCode || '',
+      hours,
+      lat:     s.location?.[0] ?? null,
+      lng:     s.location?.[1] ?? null,
     };
-  }).filter(s => s.id);
+  });
 }
 
-// ── NODEMAILER TRANSPORT ──────────────────────────────────────────────────────
-function createTransport() {
-  if (!process.env.SMTP_HOST) return null;
-  return nodemailer.createTransport({
-    host:   process.env.SMTP_HOST,
-    port:   parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true',
-    auth:   { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-  });
+// ── RESEND EMAIL ──────────────────────────────────────────────────────────────
+function getResend() {
+  if (!process.env.RESEND_API_KEY) return null;
+  return new Resend(process.env.RESEND_API_KEY);
 }
 
 function calcDeliveryDate(method) {
@@ -247,21 +199,21 @@ function calcDeliveryDate(method) {
 }
 
 async function sendOrderConfirmation(session, glsTracking) {
-  const transport = createTransport();
-  if (!transport) {
-    console.warn('[EMAIL] SMTP nincs konfigurálva – e-mail kihagyva.');
+  const resend = getResend();
+  if (!resend) {
+    console.warn('[EMAIL] RESEND_API_KEY nincs beállítva – e-mail kihagyva.');
     return;
   }
 
-  const email  = session.customer_details?.email;
-  const meta   = session.metadata || {};
-  const name   = meta.customer_name || session.customer_details?.name || 'Kedves Vásárló';
+  const email = session.customer_details?.email;
+  const meta  = session.metadata || {};
+  const name  = meta.customer_name || session.customer_details?.name || 'Kedves Vásárló';
   if (!email) return;
 
   const amount = Math.round(session.amount_total / 100).toLocaleString('hu-HU');
 
-  await transport.sendMail({
-    from:    process.env.SMTP_FROM || process.env.SMTP_USER,
+  const { error } = await resend.emails.send({
+    from:    process.env.RESEND_FROM || 'FOLD Shop <onboarding@resend.dev>',
     to:      email,
     subject: 'FOLD – Sikeres rendelés visszaigazolása',
     html:    buildEmailHtml({
@@ -280,6 +232,7 @@ async function sendOrderConfirmation(session, glsTracking) {
     }),
   });
 
+  if (error) throw new Error(error.message);
   console.log(`[EMAIL] Visszaigazoló elküldve → ${email}`);
 }
 
@@ -438,25 +391,22 @@ app.get('/api/gls-parcelshops', async (req, res) => {
   if (!zip && !city) return res.status(400).json({ error: 'Adj meg irányítószámot vagy várost!' });
 
   try {
-    // 1. Próbálkozás: GLS API GetDeliveryPoints (teljes lista, cache-elt)
-    const allShops = await glsFetchParcelShops('HU');
-    if (allShops && allShops.length > 0) {
-      const q = (zip || city || '').toLowerCase();
-      const hits = allShops.filter(s =>
-        (zip  && s.zip?.startsWith(zip))  ||
-        (city && s.city?.toLowerCase().includes(city.toLowerCase())) ||
-        s.address?.toLowerCase().includes(q) ||
-        s.name?.toLowerCase().includes(q)
-      );
-      console.log(`[GLS] ${hits.length} csomagpont (${zip || city}) – API cache`);
-      return res.json(hits.slice(0, 30));
-    }
+    const allShops = await glsFetchParcelShops();
+    const q = (zip || city || '').toLowerCase();
+    const hits = allShops.filter(s =>
+      (zip  && s.zip?.startsWith(zip)) ||
+      (city && (
+        s.city?.toLowerCase().includes(q) ||
+        s.name?.toLowerCase().includes(q) ||
+        s.address?.toLowerCase().includes(q)
+      ))
+    );
+    console.log(`[GLS] ${hits.length} csomagpont (${zip || city})`);
+    return res.json(hits.slice(0, 30));
   } catch (err) {
-    console.warn('[GLS] API fallback:', err.message);
+    console.error('[GLS] Csomagpont hiba:', err.message);
+    res.status(500).json({ error: 'A GLS csomagpont lista jelenleg nem elérhető.' });
   }
-
-  // 2. Fallback: üres lista → frontend a saját mock listájára tér vissza
-  res.json([]);
 });
 
 // ── API VÉGPONTOK ─────────────────────────────────────────────────────────────
@@ -480,17 +430,18 @@ app.post('/api/create-checkout', async (req, res) => {
     }));
 
     const isPickup = shippingMethod === 'pickup';
-    const shipFee  = isPickup ? 0 : SHIPPING_FEE;
-    if (shipFee > 0) {
-      lineItems.push({
-        price_data: {
-          currency:     'huf',
-          product_data: { name: 'Szállítási díj', description: 'GLS házhozszállítás' },
-          unit_amount:  shipFee * 100,
+    const shipFee  = isPickup ? GLS_PICKUP_FEE : SHIPPING_FEE;
+    lineItems.push({
+      price_data: {
+        currency:     'huf',
+        product_data: {
+          name:        isPickup ? 'GLS Csomagpont szállítás' : 'GLS Házhozszállítás',
+          description: isPickup ? 'GLS csomagpont kézbesítés' : 'GLS házhozszállítás',
         },
-        quantity: 1,
-      });
-    }
+        unit_amount: shipFee * 100,
+      },
+      quantity: 1,
+    });
 
     const metadata = {
       customer_name:   customerName  || '',
@@ -567,12 +518,13 @@ app.listen(PORT, () => {
   if (!process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_')) {
     console.warn('  ⚠️  Állítsd be a STRIPE_SECRET_KEY értéket a .env fájlban!\n');
   }
-  if (!process.env.SMTP_HOST) {
-    console.warn('  ⚠️  SMTP nincs konfigurálva – e-mail visszaigazolás kikapcsolva.\n');
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('  ⚠️  RESEND_API_KEY nincs beállítva – e-mail visszaigazolás kikapcsolva.\n');
   }
+  console.log('  GLS Csomagpontok → map.gls-hungary.com (nyilvános API)\n');
   if (!GLS_USER || !GLS_PASS) {
-    console.warn('  ⚠️  GLS_USERNAME / GLS_PASSWORD hiányzik – GLS integráció kikapcsolva.\n');
+    console.warn('  ⚠️  GLS_USERNAME / GLS_PASSWORD hiányzik – GLS szállítmányozás kikapcsolva.\n');
   } else {
-    console.log(`  GLS API → ${GLS_BASE} (${GLS_USER})\n`);
+    console.log(`  GLS Szállítmányozás API → ${GLS_BASE} (${GLS_USER})\n`);
   }
 });
