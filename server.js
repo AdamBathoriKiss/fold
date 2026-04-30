@@ -189,6 +189,7 @@ function createTransport() {
     port:   parseInt(process.env.SMTP_PORT || '465'),
     secure: process.env.SMTP_SECURE !== 'false',
     auth:   { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    family: 4,
   });
 }
 
@@ -345,10 +346,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.post('/webhook', async (req, res) => {
   const sig    = req.headers['stripe-signature'];
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  console.log('[WEBHOOK DEBUG] sig:', sig ? sig.substring(0, 30) + '...' : 'HIÁNYZIK');
-  console.log('[WEBHOOK DEBUG] body Buffer?', Buffer.isBuffer(req.body), '| length:', req.body?.length);
-  console.log('[WEBHOOK DEBUG] secret prefix:', secret ? secret.substring(0, 12) + '...' : 'HIÁNYZIK');
 
   if (!secret) {
     console.warn('[WEBHOOK] STRIPE_WEBHOOK_SECRET nincs beállítva.');
