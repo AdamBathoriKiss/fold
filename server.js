@@ -336,7 +336,7 @@ function buildEmailHtml({ name, amount, sessionId, phone, method, pickupName, pi
 }
 
 // ── STRIPE WEBHOOK ────────────────────────────────────────────────────────────
-app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+app.post('/webhook', express.raw({ type: '*/*' }), async (req, res) => {
   const sig    = req.headers['stripe-signature'];
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
 
