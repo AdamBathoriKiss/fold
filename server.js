@@ -4,7 +4,6 @@ const path         = require('path');
 const cors         = require('cors');
 const crypto       = require('crypto');
 const Stripe       = require('stripe');
-const nodemailer   = require('nodemailer');
 
 const app    = express();
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
@@ -181,17 +180,7 @@ function normalizeGlsShops(arr) {
   });
 }
 
-// ── NODEMAILER (SMTP) ─────────────────────────────────────────────────────────
-function createTransport() {
-  if (!process.env.SMTP_HOST) return null;
-  return nodemailer.createTransport({
-    host:   process.env.SMTP_HOST,
-    port:   parseInt(process.env.SMTP_PORT || '465'),
-    secure: process.env.SMTP_SECURE !== 'false',
-    auth:   { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    family: 4,
-  });
-}
+// ── BREVO EMAIL ───────────────────────────────────────────────────────────────
 
 function calcDeliveryDate(method) {
   const d = new Date();
@@ -205,9 +194,8 @@ function calcDeliveryDate(method) {
 }
 
 async function sendOrderConfirmation(session, glsTracking) {
-  const transport = createTransport();
-  if (!transport) {
-    console.warn('[EMAIL] SMTP nincs konfigurálva – e-mail kihagyva.');
+  if (!process.env.BREVO_API_KEY) {
+    console.warn('[EMAIL] BREVO_API_KEY nincs beállítva – e-mail kihagyva.');
     return;
   }
 
@@ -218,25 +206,37 @@ async function sendOrderConfirmation(session, glsTracking) {
 
   const amount = Math.round(session.amount_total / 100).toLocaleString('hu-HU');
 
-  await transport.sendMail({
-    from:    process.env.SMTP_FROM || process.env.SMTP_USER,
-    to:      email,
-    subject: 'FOLD – Sikeres rendelés visszaigazolása',
-    html:    buildEmailHtml({
-      name,
-      amount,
-      sessionId:    session.id,
-      phone:        meta.customer_phone  || '',
-      method:       meta.shipping_method || 'home',
-      pickupName:   meta.pickup_name     || '',
-      pickupAddr:   meta.pickup_address  || '',
-      shipZip:      meta.ship_zip        || '',
-      shipCity:     meta.ship_city       || '',
-      shipStreet:   meta.ship_street     || '',
-      deliveryDate: calcDeliveryDate(meta.shipping_method),
-      trackingNumber: glsTracking || '',
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'api-key':      process.env.BREVO_API_KEY,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      sender:      { name: 'FOLD Shop', email: process.env.BREVO_FROM || 'foldwallet@dcoding.hu' },
+      to:          [{ email }],
+      subject:     'FOLD – Sikeres rendelés visszaigazolása',
+      htmlContent: buildEmailHtml({
+        name,
+        amount,
+        sessionId:    session.id,
+        phone:        meta.customer_phone  || '',
+        method:       meta.shipping_method || 'home',
+        pickupName:   meta.pickup_name     || '',
+        pickupAddr:   meta.pickup_address  || '',
+        shipZip:      meta.ship_zip        || '',
+        shipCity:     meta.ship_city       || '',
+        shipStreet:   meta.ship_street     || '',
+        deliveryDate: calcDeliveryDate(meta.shipping_method),
+        trackingNumber: glsTracking || '',
+      }),
     }),
   });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Brevo API hiba: ${res.status} – ${err}`);
+  }
 
   console.log(`[EMAIL] Visszaigazoló elküldve → ${email}`);
 }
@@ -525,8 +525,8 @@ app.listen(PORT, () => {
   if (!process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_')) {
     console.warn('  ⚠️  Állítsd be a STRIPE_SECRET_KEY értéket a .env fájlban!\n');
   }
-  if (!process.env.SMTP_HOST) {
-    console.warn('  ⚠️  SMTP nincs konfigurálva – e-mail visszaigazolás kikapcsolva.\n');
+  if (!process.env.BREVO_API_KEY) {
+    console.warn('  ⚠️  BREVO_API_KEY nincs beállítva – e-mail visszaigazolás kikapcsolva.\n');
   }
   console.log('  GLS Csomagpontok → map.gls-hungary.com (nyilvános API)\n');
   if (!GLS_USER || !GLS_PASS) {
